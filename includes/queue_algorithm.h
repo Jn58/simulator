@@ -4,7 +4,9 @@
 #include <algorithm>
 #include "queue.h"
 #include "host.h"
+#include <list>
 
+#define POPULATION_SIZE 10
 namespace ClusterSimulator
 {
 	// TODO: As Template
@@ -41,10 +43,78 @@ namespace ClusterSimulator
 		}
 	};
 
+	class GeneAlgorithm : public QueueAlgorithm
+	{
+		private:
+		inline static const std::string name{"Genetic Algorithm"};
+	public:
+		const std::string& get_name() const noexcept override { return name; }
+		class Chromosome
+		{
+		public:
+			class Gene
+			{
+			public:
+				std::shared_ptr<Job>& job_;
+				std::shared_ptr<Host> host_;
+				std::chrono::milliseconds expected_runtime;
+				
+				Gene(std::shared_ptr<Job>& job);
+				~Gene() = default;
+
+				std::chrono::milliseconds setHost(std::shared_ptr<Host>& host);
+			};
+
+			class HostInfo
+			{
+			public:
+				int count = 0;
+				std::chrono::milliseconds make_span = std::chrono::milliseconds(0);
+				std::list<Gene>::iterator first_job;
+			};
+
+			std::list<Gene> gens;
+			std::map<std::shared_ptr<Host>, HostInfo> hosts;
+
+			std::chrono::milliseconds max_span = std::chrono::milliseconds(0);
+			std::chrono::milliseconds min_span = std::chrono::milliseconds(0);
+
+			size_t len(){ return gens.size(); };
+
+			void enqueJob(std::shared_ptr<Job>& job);
+			void deleteJob(std::shared_ptr<Job>& job);
+
+			Chromosome mutation() const;
+			Chromosome crossOver(const Chromosome& other) const;
+
+		};
+
+		std::vector<Chromosome> population{POPULATION_SIZE};
+
+		void enqueJob(std::shared_ptr<Job> &job);
+		void deleteJob(std::shared_ptr<Job>& job);
+		void update_pedding_job();
+		Chromosome& getBestChromosome() const;
+		void mutation();
+		void crossOver();
+		void sort();
+		void dropout();
+
+		void step();
+
+		void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs);
+		void exec();
+		bool check(std::vector<std::shared_ptr<Job>>& jobs);
+
+		void run(std::vector<std::shared_ptr<Job>>& jobs) const override;
+
+	};
+
 	class QueueAlgorithms
 	{
 	public:
 		inline static const QueueAlgorithm* const OLB = new OLBAlgorithm();
+		inline static const QueueAlgorithm* const Genetic = new GeneAlgorithm();
 	};
 }
 
