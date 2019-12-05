@@ -94,6 +94,8 @@ namespace ClusterSimulator
 
 		};
 
+		size_t length = 0;
+
 		std::vector<Chromosome> population{POPULATION_SIZE};
 
 		void enqueJob(std::shared_ptr<Job> &job) {};
@@ -109,7 +111,7 @@ namespace ClusterSimulator
 
 		void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs) {};
 		void exec() {};
-		bool check(std::vector<std::shared_ptr<Job>>& jobs) { return bool{ true }; };
+		bool check(std::vector<std::shared_ptr<Job>>& jobs);
 
 	
 		void run(std::vector<std::shared_ptr<Job>>& jobs) override;
