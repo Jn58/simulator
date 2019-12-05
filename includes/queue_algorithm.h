@@ -15,7 +15,7 @@ namespace ClusterSimulator
 	public:
 		virtual const std::string& get_name() const noexcept = 0;
 		
-		virtual void run(std::vector<std::shared_ptr<Job>>& jobs) const = 0;
+		virtual void run(std::vector<std::shared_ptr<Job>>& jobs) = 0;
 	};
 
 	/**
@@ -27,7 +27,7 @@ namespace ClusterSimulator
 	public:
 		const std::string& get_name() const noexcept override { return name; }
 
-		void run(std::vector<std::shared_ptr<Job>>& jobs) const override
+		void run(std::vector<std::shared_ptr<Job>>& jobs) override
 		{
 			for (auto& job : jobs)
 			{
@@ -106,7 +106,7 @@ namespace ClusterSimulator
 		void exec();
 		bool check(std::vector<std::shared_ptr<Job>>& jobs);
 
-		void run(std::vector<std::shared_ptr<Job>>& jobs) const override;
+		void run(std::vector<std::shared_ptr<Job>>& jobs) override;
 
 	};
 
