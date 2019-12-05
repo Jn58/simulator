@@ -128,8 +128,8 @@ namespace ClusterSimulator
 		// 	return true;
 		// }
 
-		void set_algorithm(const QueueAlgorithm* const algorithm) noexcept;
-		const QueueAlgorithm* current_algorithm{ nullptr };
+		void set_algorithm(QueueAlgorithm* const algorithm) noexcept;
+		QueueAlgorithm* current_algorithm{ nullptr };
 
 		std::vector<Host*> match(const Job& job);
 

@@ -113,8 +113,8 @@ namespace ClusterSimulator
 	class QueueAlgorithms
 	{
 	public:
-		inline static const QueueAlgorithm* const OLB = new OLBAlgorithm();
-		inline static const QueueAlgorithm* const Genetic = new GeneAlgorithm();
+		inline static QueueAlgorithm* const OLB = new OLBAlgorithm();
+		inline static QueueAlgorithm* const Genetic = new GeneAlgorithm();
 	};
 }
 
