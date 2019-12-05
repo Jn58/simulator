@@ -23,7 +23,7 @@ namespace ClusterSimulator
 	std::ofstream job_submit_("logs/job_submit_.txt");
 	bprinter::TablePrinter ClusterSimulation::tp_{ &jobmart_file_ };
 
-	ClusterSimulation::ClusterSimulation(Scenario& scenario, Cluster& cluster, const QueueAlgorithm& algorithm)
+	ClusterSimulation::ClusterSimulation(Scenario& scenario, Cluster& cluster, QueueAlgorithm& algorithm)
 	: cluster_{ cluster },
 	scenario_{ scenario },
 	all_queues_{ scenario.generate_queues(*this) },

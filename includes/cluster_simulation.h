@@ -69,7 +69,7 @@ namespace ClusterSimulator
 		void next();
 
 	public:
-		ClusterSimulation(Scenario& scenario, Cluster& cluster, const QueueAlgorithm& algorithm);
+		ClusterSimulation(Scenario& scenario, Cluster& cluster, QueueAlgorithm& algorithm);
 
 		bool next_dispatch_reserved{ false };
 		std::size_t num_dispatched_slots{ 0 };
