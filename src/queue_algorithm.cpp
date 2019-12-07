@@ -3,6 +3,27 @@
 
 
 namespace ClusterSimulator {
+	GeneAlgorithm::Chromosome& GeneAlgorithm::getBestChromosome()
+	{
+		return population[0];
+	}
+	void GeneAlgorithm::exec()
+	{
+		auto &best_hosts = getBestChromosome().hosts;
+		std::vector<std::shared_ptr<Job>> excuted_jobs;
+		for (auto it = best_hosts.begin(); it != best_hosts.end() ; ++it)
+		{
+			auto & host = it->first;
+			auto& job = it->second.first_job->job_;
+			if (host->is_executable(*job))
+			{
+				host->execute_job(*job);
+				excuted_jobs.push_back(job);
+			}
+		}
+		deleteJobs(excuted_jobs);
+		
+	}
 	bool GeneAlgorithm::check(std::vector<std::shared_ptr<Job>>& jobs)
 	{
 		if(jobs.size() < length ) return false;
