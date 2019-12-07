@@ -5,6 +5,8 @@
 #include "queue.h"
 #include "host.h"
 #include <list>
+#include <cstdlib>
+#include <ctime>
 
 #define POPULATION_SIZE 10
 namespace ClusterSimulator
@@ -55,11 +57,11 @@ namespace ClusterSimulator
 			class Gene
 			{
 			public:
-				std::shared_ptr<Job>& job_;
+				std::shared_ptr<Job> job_;
 				std::shared_ptr<Host> host_;
 				std::chrono::milliseconds expected_runtime;
 				
-				Gene(std::shared_ptr<Job>& job) : job_(job) {};
+				Gene(std::shared_ptr<Job>& job);
 				~Gene() = default;
 
 				std::chrono::milliseconds setHost(std::shared_ptr<Host>& host) {};
@@ -81,7 +83,7 @@ namespace ClusterSimulator
 
 			size_t len(){ return gens.size(); };
 
-			void enqueJob(std::shared_ptr<Job>& job) {};
+			void enqueJob(std::shared_ptr<Job>& job);
 			void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 
 			Chromosome mutation() const{
@@ -98,7 +100,9 @@ namespace ClusterSimulator
 
 		std::vector<Chromosome> population{POPULATION_SIZE};
 
-		void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs) {};
+		GeneAlgorithm() { srand(time(NULL)); }
+
+		void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs);
 		void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 		void update_pedding_job() {};
 		GeneAlgorithm::Chromosome& getBestChromosome();
