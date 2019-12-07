@@ -3,6 +3,13 @@
 
 
 namespace ClusterSimulator {
+	void GeneAlgorithm::deleteJobs(std::vector<std::shared_ptr<Job>>& jobs)
+	{
+		for (auto& p : population)
+		{
+			p.deleteJobs(jobs);
+		}
+	}
 	GeneAlgorithm::Chromosome& GeneAlgorithm::getBestChromosome()
 	{
 		return population[0];

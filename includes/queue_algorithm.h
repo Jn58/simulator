@@ -82,7 +82,7 @@ namespace ClusterSimulator
 			size_t len(){ return gens.size(); };
 
 			void enqueJob(std::shared_ptr<Job>& job) {};
-			void deleteJobs(std::shared_ptr<Job>& job) {};
+			void deleteJobs(std::vector<std::shared_ptr<Job>>& job) {};
 
 			Chromosome mutation() const{
 				return Chromosome();
@@ -99,7 +99,7 @@ namespace ClusterSimulator
 		std::vector<Chromosome> population{POPULATION_SIZE};
 
 		void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs) {};
-		void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs) {};
+		void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 		void update_pedding_job() {};
 		GeneAlgorithm::Chromosome& getBestChromosome();
 		void mutation() {};
