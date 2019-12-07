@@ -44,4 +44,14 @@ namespace ClusterSimulator {
 		enqueJobs(jobs);
 		step();
 	}
+	void GeneAlgorithm::Chromosome::deleteJobs(std::vector<std::shared_ptr<Job>>& jobs)
+	{
+		auto gene_it = gens.begin();
+		for (auto job_it = jobs.begin(); job_it != jobs.end(); ++job_it)
+		{
+			while (gene_it->job_ != *job_it) ++gene_it;
+			gene_it = gens.erase(gene_it);
+		}
+
+	}
 }
