@@ -132,6 +132,7 @@ namespace ClusterSimulator
 		QueueAlgorithm* current_algorithm{ nullptr };
 
 		std::vector<Host*> match(const Job& job);
+		ClusterSimulation* simulation_;
 
 	private:
 		void sort(std::vector<Host*>::iterator first, std::vector<Host*>::iterator last, const Job& job) const;
@@ -147,7 +148,6 @@ namespace ClusterSimulator
 		int default_host_specification_{};
 
 		// fields
-		ClusterSimulation* simulation_;
 		std::vector<std::shared_ptr<Job>> jobs_;
         // TODO: maybe unnecessary
         std::vector<std::shared_ptr<Job>> pending_jobs_;
