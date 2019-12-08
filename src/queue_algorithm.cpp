@@ -38,13 +38,26 @@ namespace ClusterSimulator {
 	}
 	bool GeneAlgorithm::run_job(std::shared_ptr<Job> job)
 {
-		std::vector<Host*> hosts{ job->get_eligible_hosts() };
-		if (hosts.empty())
+		std::vector<Host*> eligible_hosts{ job->get_eligible_hosts() };
+		std::vector<Host*> idel_hosts;
+		if (eligible_hosts.empty())
+		{
+			return false;
+		}
+		for (auto h_ptr : eligible_hosts)
+		{
+			auto& hosts = this->getBestChromosome().hosts;
+			if( hosts.find(h_ptr) == hosts.end())
+			{
+				idel_hosts.push_back(h_ptr);
+			}
+		}
+		if (idel_hosts.empty())
 		{
 			return false;
 		}
 
-		Host* best_host = *std::min_element(hosts.begin(), hosts.end(), 
+		Host* best_host = *std::min_element(idel_hosts.begin(), idel_hosts.end(), 
 			[=](const Host* a, const Host* b)
 			{
 				return a->get_expected_run_time(*job) < b->get_expected_run_time(*job);
@@ -95,6 +108,7 @@ namespace ClusterSimulator {
 		}
 		if (pedding_n != length)
 		{
+			printf("%d\n", this->length);
 			error("pedding_n and length must be same");
 		}
 
@@ -144,7 +158,7 @@ namespace ClusterSimulator {
 		for(auto job : jobs)
 		{
 			auto gene_it = gens.begin();
-			while (gene_it != gens.end() && gene_it->job_ != job) ++gene_it;
+			while (gene_it != gens.end() && gene_it->job_ != job) gene_it = next(gene_it);
 			if (gene_it == gens.end())
 			{
 				error("fail to find gene");
@@ -172,15 +186,15 @@ namespace ClusterSimulator {
 			}
 			else
 			{
-				auto next_gene = std::next(gene_it);
-				while (next_gene != gens.end() && next_gene->host_!= host_it->first) ++next_gene;
-				if (next_gene == gens.end())
+				gens.erase(gene_it);
+				gene_it = gens.begin();
+				while (gene_it != gens.end() && gene_it->host_ != host_it->first) ++gene_it;
+				if (gene_it == gens.end())
 				{
-					error("fail to find next gen");
+					error("fail to find gene");
 				}
-				host_it->second.first_job_gene = next_gene;
+				host_it->second.first_job_gene = gene_it;
 			}
-			gens.erase(gene_it);
 		}
 
 	}
