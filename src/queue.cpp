@@ -67,7 +67,7 @@ namespace ClusterSimulator
 		std::vector <std::vector<Host* >> hosts(max);
 
 		int i;
-		#pragma omp parallel for
+		#pragma omp parallel for shared(hosts)
 		for (i = 0; i < cand_host_list.size(); ++i)
 		{
 			auto tid = omp_get_thread_num();

@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#define POPULATION_SIZE 10
+#define POPULATION_SIZE 2
 namespace ClusterSimulator
 {
 	// TODO: As Template
@@ -57,14 +57,15 @@ namespace ClusterSimulator
 			class Gene
 			{
 			public:
-				std::shared_ptr<Job> job_;
-				std::shared_ptr<Host> host_;
-				std::chrono::milliseconds expected_runtime;
+				Job* job_=nullptr;
+				Host* host_=nullptr;
+				std::chrono::milliseconds expected_runtime=std::chrono::milliseconds(0);
 				
-				Gene(std::shared_ptr<Job>& job);
+				Gene(Job* job);
+				Gene() {};
 				~Gene() = default;
 
-				std::chrono::milliseconds setHost(std::shared_ptr<Host>& host) {};
+				std::chrono::milliseconds setHost(Host* host) {};
 			};
 
 			class HostInfo
@@ -72,19 +73,21 @@ namespace ClusterSimulator
 			public:
 				int count = 0;
 				std::chrono::milliseconds make_span = std::chrono::milliseconds(0);
-				std::list<Gene>::iterator first_job;
+				std::list<Gene>::iterator first_job_gene = std::list<Gene>::iterator();
+				HostInfo() {};
+				HostInfo(std::list<Gene>::iterator first_job_gene);
 			};
 
 			std::list<Gene> gens;
-			std::map<std::shared_ptr<Host>, HostInfo> hosts;
+			std::map<Host*, HostInfo> hosts;
 
 			std::chrono::milliseconds max_span = std::chrono::milliseconds(0);
 			std::chrono::milliseconds min_span = std::chrono::milliseconds(0);
 
 			size_t len(){ return gens.size(); };
 
-			void enqueJob(std::shared_ptr<Job>& job);
-			void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
+			void enqueJob(Job* job);
+			void chromosomeDeleteJobs(std::vector<Job*>* jobs);
 
 			Chromosome mutation() const{
 				return Chromosome();
@@ -100,21 +103,23 @@ namespace ClusterSimulator
 
 		std::vector<Chromosome> population{POPULATION_SIZE};
 
-		GeneAlgorithm() { srand(time(NULL)); }
+		//GeneAlgorithm() { srand(time(NULL)); }
+		GeneAlgorithm() { srand(0); }
 
-		void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs);
-		void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
+		void enqueJobs(std::vector<std::shared_ptr<Job>>* jobs);
+		void deleteJobs(std::vector<Job*>* jobs);
 		void update_pedding_job() {};
 		GeneAlgorithm::Chromosome& getBestChromosome();
 		void mutation() {};
 		void crossOver() {};
 		void sort() {};
 		void dropout() {};
+		bool run_job(Job* job);
 
 		void step() {};
 
 		void exec();
-		bool check(std::vector<std::shared_ptr<Job>>& jobs);
+		bool check(std::vector<Job*>* jobs);
 
 	
 		void run(std::vector<std::shared_ptr<Job>>& jobs) override;

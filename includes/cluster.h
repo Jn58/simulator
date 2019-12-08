@@ -36,6 +36,7 @@ namespace ClusterSimulator
 	private:
 		std::size_t version_{1};
 		std::unordered_map<std::string, Host*> nodes_map_;
+	public:
 		std::vector<Host> nodes_;
 	};
 }
