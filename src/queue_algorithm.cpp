@@ -6,116 +6,189 @@
 
 
 namespace ClusterSimulator {
-	void GeneAlgorithm::enqueJobs(std::vector<std::shared_ptr<Job>>& jobs)
+	void GeneAlgorithm::enqueJobs(std::vector<std::shared_ptr<Job>>* jobs)
 	{
-		for (auto job: jobs)
+		for (int i = 0; i < jobs->size(); ++i)
 		{
-			for (auto p : population)
-			{
-				p.enqueJob(job);
-			}
-
+			auto job = &(*jobs->at(i));
+			if(job->state==JobState::WAIT)
+				if(!run_job(job))
+				{ 
+					for (auto& p : population)
+					{
+						p.enqueJob(job);
+					}
+					length += 1;
+				}
 		}
-		length += jobs.size();
 	}
-	void GeneAlgorithm::deleteJobs(std::vector<std::shared_ptr<Job>>& jobs)
+	void GeneAlgorithm::deleteJobs(std::vector<Job*>* jobs)
 	{
-		for (auto& p : population)
+		if (jobs->size() != 0)
 		{
-			p.deleteJobs(jobs);
+			for (auto& p : population)
+			{
+				p.chromosomeDeleteJobs(jobs);
+			}
+			length -= jobs->size();
 		}
-		length -= jobs.size();
 	}
 	GeneAlgorithm::Chromosome& GeneAlgorithm::getBestChromosome()
 	{
 		return population[0];
 	}
+	bool GeneAlgorithm::run_job(Job* job)
+{
+		auto hosts = job->get_eligible_hosts();
+		if (hosts.empty())
+		{
+			return false;
+		}
+
+		auto best_host = *std::min_element(hosts.begin(), hosts.end(), 
+			[=](const Host* a, const Host* b)
+			{
+				return a->get_expected_run_time(*job) < b->get_expected_run_time(*job);
+			});
+		best_host->execute_job(*job);
+		return true;
+
+	}
 	void GeneAlgorithm::exec()
 	{
 		if (length != 0)
 		{
-			auto& best_hosts = getBestChromosome().hosts;
-			std::vector<std::shared_ptr<Job>> excuted_jobs;
-			for (auto it = best_hosts.begin(); it != best_hosts.end(); ++it)
+			auto best_hosts = &(getBestChromosome().hosts);
+			std::vector<Job*> excuted_jobs;
+			for (auto it = best_hosts->begin(); it != best_hosts->end(); ++it)
 			{
-				auto& host = it->first;
-				auto& job = it->second.first_job->job_;
-				if (host->is_executable(*job))
+				auto host = it->first;
+				auto host_info = &it->second;
+				if(host_info->count>0)
 				{
-					host->execute_job(*job);
-					excuted_jobs.push_back(job);
+					if (host != host_info->first_job_gene->host_)
+					{
+						printf(";klasjdf\n");
+					}
+					auto job = host_info->first_job_gene->job_;
+					if (host->is_executable(*job))
+					{
+						host->execute_job(*job);
+						excuted_jobs.push_back(job);
+					}
 				}
 			}
-			deleteJobs(excuted_jobs);
+			deleteJobs(&excuted_jobs);
 		}
 	}
-	bool GeneAlgorithm::check(std::vector<std::shared_ptr<Job>>& jobs)
+	bool GeneAlgorithm::check(std::vector<Job*>* jobs)
 	{
-		if(jobs.size() < length ) return false;
-		if(jobs[jobs.size() - length]->state != JobState::PEND  ) return false;
+		auto i = 0;
+		for (; i < jobs->size() && jobs->at(i)->state == JobState::WAIT; ++i);
+		auto pedd_count = jobs->size() - i;
+		if (pedd_count != length)
+		{
+			printf("%d\t%d\n", pedd_count, length);
+		}
+		if (length == 0) return true;
+
+		if(jobs->at(jobs->size() - length)->state != JobState::PEND  ) return false;
 
 		return true;
 	}
 	void GeneAlgorithm::run(std::vector<std::shared_ptr<Job>>& jobs) {
-		assert(check());
+		
 		exec();
-		enqueJobs(jobs);
+		enqueJobs(&jobs);
 		step();
 	}
-	void GeneAlgorithm::Chromosome::enqueJob(std::shared_ptr<Job>& job)
+	void GeneAlgorithm::Chromosome::enqueJob(Job* job)
 	{
 		gens.emplace_back(job);
 		auto gene = std::prev(gens.end());
-		auto& h = gene->host_;
-		hosts[h].count += 1;
-		if (hosts[h].count == 1)
+		auto host_it = hosts.find(gene->host_);
+		if (host_it == hosts.end())
 		{
-			hosts[h].first_job = gene;
-			hosts[h].make_span = gene->expected_runtime;
-			if (hosts.size() == 1)
-			{
-				min_span = max_span = hosts[h].make_span;
-			}
+			host_it = hosts.insert(std::pair(gene->host_, Chromosome::HostInfo(gene))).first;
 		}
-		else
+		auto host_info = &host_it->second;
+
+		bool flag_min = host_info->make_span == min_span;
+		bool flag_max = host_info->make_span == max_span;
+
+		host_info->make_span += gene->expected_runtime;
+		host_info->count += 1;
+
+		if (host_info->count == 1)
 		{
-			if (hosts[h].make_span == max_span)
+			host_info->first_job_gene = gene;
+		}
+
+		if(flag_min)
+			min_span = std::min_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+		if (flag_max)
+			max_span = host_info->make_span;
+	}
+	void GeneAlgorithm::Chromosome::chromosomeDeleteJobs(std::vector<Job*>* jobs)
+	{
+		for(int i = 0 ; i < jobs->size(); ++i)
+		{
+			auto gene_it = gens.begin();
+			auto job = jobs->at(i);
+			while (gene_it != gens.end() && gene_it->job_ != job) ++gene_it;
+			if (gene_it == gens.end())
 			{
-				if (hosts[h].make_span == min_span)
-					min_span = max_span = hosts[h].make_span += gene->expected_runtime;
-				else
-					max_span = hosts[h].make_span += gene->expected_runtime;
+				printf("%d\n", job->id);
+				printf("asdfasdf\n");
 			}
-			else if (hosts[h].make_span == min_span)
+			auto host_it = hosts.find(gene_it->host_);
+			auto host_info = &host_it->second;
+			bool max_flag = (max_span == host_info->make_span);
+			bool min_flag = (min_span == host_info->make_span);
+			host_info->make_span -= gene_it->expected_runtime;
+			host_info->count -= 1;
+
+			if (max_flag)
+				max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+			if (min_flag)
+				min_span = host_info->make_span;
+
+			if (host_info->count == 0)
 			{
-				hosts[h].make_span += gene->expected_runtime;
-				min_span = std::min_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+				//hosts.erase(host_it);
+			}
+			else
+			{
+				auto next_gene = gens.begin();
+				while (next_gene != gens.end() && next_gene->job_ != job) ++next_gene;
+				if (next_gene == gens.end())
+				{
+					printf("asdfasdf\n");
+				}
+				host_info->first_job_gene = next_gene;
 
 			}
-		}
-		
-		
-	}
-	void GeneAlgorithm::Chromosome::deleteJobs(std::vector<std::shared_ptr<Job>>& jobs)
-	{
-		auto gene_it = gens.begin();
-		for (auto job_it = jobs.begin(); job_it != jobs.end(); ++job_it)
-		{
-			while (gene_it->job_ != *job_it) ++gene_it;
 			gene_it = gens.erase(gene_it);
 		}
 
 	}
-	GeneAlgorithm::Chromosome::Gene::Gene(std::shared_ptr<Job>& job): job_(job)
-	{
-		auto all_hosts = job->queue_managing_this_job->simulation_->get_cluster().vector();
-		int n = all_hosts.size();
+	GeneAlgorithm::Chromosome::Gene::Gene(Job* job): job_(job)
+	{	
+		std::vector<Host>* all_hosts{ &(job->queue_managing_this_job->simulation_->get_cluster().nodes_) };
+		//auto queue = job->queue_managing_this_job;
+		//auto simulation = queue->simulation_;
+		//auto& cluster = simulation->get_cluster();
+		//auto& all_hosts = cluster.vector();
+		int n = all_hosts->size();
 		int i = rand() % n;
-		while (all_hosts[i].max_slot < job->slot_required || all_hosts[i].max_mem < job->mem_required)
+		while (all_hosts->at(i).max_slot < job->slot_required || all_hosts->at(i).max_mem < job->mem_required)
 		{
 			i = rand() % n;
 		}
-		host_ = std::shared_ptr<Host>(&all_hosts[i]);
+		host_ = &all_hosts->at(i);
 		expected_runtime = host_->get_expected_run_time(*job_);
+	}
+	GeneAlgorithm::Chromosome::HostInfo::HostInfo(std::list<Gene>::iterator first_job_gene) : first_job_gene(first_job_gene)
+	{
 	}
 }

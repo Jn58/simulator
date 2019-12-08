@@ -13,7 +13,8 @@
 #include <fstream>
 
 //#include "dependencies/
-
+int a = 0;
+int b = 0;
 namespace ClusterSimulator
 {
 	std::shared_ptr<spdlog::logger> ClusterSimulation::file_logger;
@@ -177,11 +178,19 @@ namespace ClusterSimulator
 				std::tie(next_entries, next_arrival_time) = scenario_.pop_all_latest();
 				if constexpr(!console_output)
 				{
+					a = 0;
+					b = 0;
+
+						
 					//std::cout << 
 					//	std::string(std::to_string(previous_counter).length(), '\b')
 					//	<< scenario_.count();
 					//previous_counter = scenario_.count();
-					std::cout << "\33[2K\r" << "Remaining scenarios: " << scenario_.count();
+					a = scenario_.count();
+					b = 1 + a - 1;
+
+					std::cout << "\33[2K\r" << "Remaining scenarios: " << scenario_.count() << std::endl;
+
 				}
 
 				auto next_event_time = events_.top().time;

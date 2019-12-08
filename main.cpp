@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	ClusterSimulator::Parser::parse_cluster(&cluster, host_path);
 
 	// Start simulation
-	ClusterSimulator::ClusterSimulation simulation{ scenario, cluster, *ClusterSimulator::QueueAlgorithms::OLB};
+	ClusterSimulator::ClusterSimulation simulation{ scenario, cluster, *ClusterSimulator::QueueAlgorithms::Genetic};
 	simulation.run();
 
 	// Print summary
