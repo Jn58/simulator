@@ -57,11 +57,11 @@ namespace ClusterSimulator
 			class Gene
 			{
 			public:
-				Job* job_=nullptr;
-				Host* host_=nullptr;
-				std::chrono::milliseconds expected_runtime=std::chrono::milliseconds(0);
+				std::shared_ptr<Job> job_ = nullptr;
+				Host* host_ = nullptr;
+				std::chrono::milliseconds expected_runtime = std::chrono::milliseconds(0);
 				
-				Gene(Job* job);
+				Gene(std::shared_ptr<Job> job);
 				Gene() {};
 				~Gene() = default;
 
@@ -75,7 +75,7 @@ namespace ClusterSimulator
 				std::chrono::milliseconds make_span = std::chrono::milliseconds(0);
 				std::list<Gene>::iterator first_job_gene = std::list<Gene>::iterator();
 				HostInfo() {};
-				HostInfo(std::list<Gene>::iterator first_job_gene);
+				HostInfo(std::list<Gene>::iterator& first_job_gene);
 			};
 
 			std::list<Gene> gens;
@@ -86,8 +86,8 @@ namespace ClusterSimulator
 
 			size_t len(){ return gens.size(); };
 
-			void enqueJob(Job* job);
-			void chromosomeDeleteJobs(std::vector<Job*>* jobs);
+			void enqueJob(std::shared_ptr<Job> job);
+			void chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 
 			Chromosome mutation() const{
 				return Chromosome();
@@ -106,20 +106,20 @@ namespace ClusterSimulator
 		//GeneAlgorithm() { srand(time(NULL)); }
 		GeneAlgorithm() { srand(0); }
 
-		void enqueJobs(std::vector<std::shared_ptr<Job>>* jobs);
-		void deleteJobs(std::vector<Job*>* jobs);
+		void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs);
+		void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 		void update_pedding_job() {};
 		GeneAlgorithm::Chromosome& getBestChromosome();
 		void mutation() {};
 		void crossOver() {};
 		void sort() {};
 		void dropout() {};
-		bool run_job(Job* job);
+		bool run_job(std::shared_ptr<Job> job);
 
 		void step() {};
 
 		void exec();
-		bool check(std::vector<Job*>* jobs);
+		bool check(std::vector<std::shared_ptr<Job>>& jobs);
 
 	
 		void run(std::vector<std::shared_ptr<Job>>& jobs) override;
