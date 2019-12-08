@@ -106,6 +106,7 @@ namespace ClusterSimulator
 		//GeneAlgorithm() { srand(time(NULL)); }
 		GeneAlgorithm() { srand(0); }
 
+		bool run_job(std::shared_ptr<Job> job);
 		void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs);
 		void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 		void update_pedding_job() {};
@@ -114,7 +115,6 @@ namespace ClusterSimulator
 		void crossOver() {};
 		void sort() {};
 		void dropout() {};
-		bool run_job(std::shared_ptr<Job> job);
 
 		void step() {};
 
