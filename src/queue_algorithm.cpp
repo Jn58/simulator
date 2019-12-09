@@ -197,40 +197,61 @@ namespace ClusterSimulator {
 	}
 	void GeneAlgorithm::Chromosome::chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs)
 	{
-		for(auto job : jobs)
+
+		int thread_num = std::min(omp_get_max_threads(),int(hosts.size()));
+		int i;
+#pragma omp parallel num_threads(thread_num)
 		{
-			auto gene_it = gens.begin();
-			while (gene_it != gens.end() && gene_it->job_ != job) gene_it = next(gene_it);
-			if (gene_it == gens.end())
+#pragma omp for
+			for(i = 0; i < jobs.size(); ++i)
 			{
-				error("fail to find gene");
-			}
-
-			auto host_it = hosts.find(gene_it->host_);
-
-			{
-				auto& host_info = host_it->second;
-				bool max_flag = (max_span == host_info.make_span);
-				bool min_flag = (min_span == host_info.make_span);
-
-				host_info.make_span -= gene_it->expected_runtime;
-				if (host_info.queue.front()->host_ != host_it->first)
+				auto& job{ jobs[i] };
+				auto gene_it = gens.begin();
+				while (gene_it != gens.end() && gene_it->job_ != job) gene_it = next(gene_it);
+				if (gene_it == gens.end())
 				{
-					error("host assigned to job must same with host queue");
+					error("fail to find gene");
 				}
 
-				host_info.queue.pop_front();
+				auto host{ gene_it->host_ };
+				auto host_it = hosts.find(host);
+				if (host_it == hosts.end())
+				{
+					error("can not fild host info for gene");
+				}
 
-				if (max_flag)
-					max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
-				if (min_flag)
-					min_span = host_info.make_span;
+				
+				auto& host_info = host_it->second;
+#pragma omp critical
+				{
+					bool max_flag = (max_span == host_info.make_span);
+					bool min_flag = (min_span == host_info.make_span);
+					host_info.make_span -= gene_it->expected_runtime;
+					if (max_flag)
+						max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+					if (min_flag)
+						min_span = host_info.make_span;
+				}
+				auto it = host_info.queue.begin();
+				while (it != host_info.queue.end() && (*it)->job_ != job) ++it;
+				if (it == host_info.queue.end())
+				{
+					error("can not find job in host info queue");
+				}
+#pragma omp critical
+				{
+					host_info.queue.erase(it);
+					if (host_info.queue.size()== 0)
+					{
+						hosts.erase(host_it);
+					}
+				}
+
+
+				
+
 			}
 
-			if (host_it->second.queue.size()== 0)
-			{
-				hosts.erase(host_it);
-			}
 		}
 
 	}
