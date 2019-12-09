@@ -383,14 +383,17 @@ namespace ClusterSimulator {
 	{}
 	Host* GeneAlgorithm::Chromosome::Gene::setRandomHost()
 	{
-		const std::vector<Host>& all_hosts{ job_->queue_managing_this_job->simulation_->get_cluster().vector() };
+		std::vector<Host>& all_hosts{ job_->queue_managing_this_job->simulation_->get_cluster().vector() };
 		size_t n = all_hosts.size();
-		int i = rand() % n;
+		unsigned int seed = pseudo_random((unsigned int)(time(NULL)) ^ (unsigned int)(this)^(unsigned int)(clock())^(unsigned int)(&*job_));
+		seed = pseudo_random(seed);
+		int i = seed % n;
 		while (all_hosts[i].max_slot < job_->slot_required || all_hosts[i].max_mem < job_->mem_required)
 		{
-			i = rand() % n;
+			seed = pseudo_random(seed);
+			i = seed % n;
 		}
-		host_ = (Host*)&all_hosts[i]; 
+		host_ = &all_hosts[i]; 
 		expected_runtime = host_->get_expected_run_time(*job_);
 		return host_;
 	}
