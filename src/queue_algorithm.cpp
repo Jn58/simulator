@@ -213,10 +213,7 @@ namespace ClusterSimulator {
 
 		host_info.make_span += gene_it->expected_runtime;
 		host_info.queue.push_back(gene_it);
-		host_info.queue.sort([](const auto& left, const auto& right) {
-			return left->job_->submit_time < right->job_->submit_time;
-			});
-
+		host_info.sort();
 		if(flag_min)
 			min_span = std::min_element(hosts.begin(), hosts.end(), [](const auto& a, const auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
 		if (flag_max)
@@ -303,4 +300,10 @@ namespace ClusterSimulator {
 		host_(ref.host_),
 		expected_runtime(ref.expected_runtime)
 	{}
+	void GeneAlgorithm::Chromosome::HostInfo::sort()
+	{
+		queue.sort([](const auto& left, const auto& right) {
+			return left->job_->submit_time < right->job_->submit_time;
+			});
+	}
 }
