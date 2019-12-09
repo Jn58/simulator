@@ -66,6 +66,13 @@ namespace ClusterSimulator {
 		best_host->execute_job(*job);
 		return true;
 	}
+	void GeneAlgorithm::step()
+	{
+		mutation();
+		crossOver();
+		sort();
+		dropout();
+	}
 	void GeneAlgorithm::exec()
 	{
 		if (length != 0)

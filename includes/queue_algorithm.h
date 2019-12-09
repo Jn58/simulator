@@ -114,7 +114,7 @@ namespace ClusterSimulator
 		void sort() {};
 		void dropout() {};
 
-		void step() {};
+		void step();
 
 		void exec();
 		bool check(std::vector<std::shared_ptr<Job>>& jobs);
