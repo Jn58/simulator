@@ -6,6 +6,14 @@
 #include "error.h"
 #include <omp.h>
 
+unsigned int pseudo_random(unsigned int x)
+{
+	x ^= x << 13;
+	x ^= x >> 17;
+	x ^= x << 5;
+	return x;
+}
+
 
 namespace ClusterSimulator {
 	void GeneAlgorithm::enqueJobs(std::vector<std::shared_ptr<Job>>& jobs)
