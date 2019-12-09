@@ -44,7 +44,7 @@ file(GLOB SRC_FILES
 add_executable (cluster-simulator ${SRC_FILES})
 
 # OpenMP
-find_package(OpenMp)
+find_package(OpenMP)
 if (OpenMP_CXX_FOUND)
 	target_link_libraries(cluster-simulator OpenMP::OpenMP_CXX)
 endif()
