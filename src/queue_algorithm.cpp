@@ -238,165 +238,35 @@ namespace ClusterSimulator {
 	}
 	void GeneAlgorithm::Chromosome::chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs)
 	{
-
-		int thread_num = std::min(omp_get_max_threads(),int(jobs.size()));
-		thread_num = 1;
-		std::map<Host*, std::vector<std::list<Gene>::iterator>> assigned_hosts;
-		std::vector<std::map<Host*, std::vector<std::list<Gene>::iterator>>::iterator> assigned_hosts_vec;
-		int i;
-		
-		std::vector<std::vector<std::list<Gene>::iterator>> gene_its_vec(thread_num);
-
-#pragma omp parallel num_threads(thread_num)
+		for(auto job : jobs)
 		{
-#pragma omp for
-			for (i = 0; i < jobs.size(); ++i)
+			auto gene_it = gens.begin();
+			while (gene_it != gens.end() && gene_it->job_ != job) gene_it = next(gene_it);
+			if (gene_it == gens.end())
 			{
-				auto job{ jobs[i] };
-				int tid = omp_get_thread_num();
-				auto gene_it = std::find(gens.begin(),gens.end(),job);
-				if (gene_it == gens.end())
-				{
-					error_("fail to find gene");
-				}
-				gene_its_vec[tid].push_back(gene_it);
+				error_("fail to find gene");
 			}
-		}
-// end of parallel
 
-		for (auto& vec : gene_its_vec)
-		{
-			for (auto it : vec)
+			auto host_it = hosts.find(gene_it->host_);
+
 			{
-				assigned_hosts[it->host_].push_back(it);
-			}
-		}
-		
-		for(auto it = assigned_hosts.begin(); it != assigned_hosts.end(); ++it)
-		{
-			assigned_hosts_vec.push_back(it);
-		}
-
-		thread_num = std::min(omp_get_max_threads(),int(assigned_hosts_vec.size()));
-		thread_num = 1;
-
-#pragma omp parallel num_threads(thread_num)
-		{
-#pragma omp for
-			for (i = 0; i < assigned_hosts_vec.size(); ++i)
-			{
-				Host* host{ assigned_hosts_vec[i]->first };
-				auto& host_info{ hosts[host] };
-				for (auto gene_it : assigned_hosts_vec[i]->second)
-				{
-					if (gene_it->host_ != host)
-					{
-						error_("gene host must same with host");
-					}
-					auto job{ gene_it->job_ };
-					host_info.make_span -= gene_it->expected_runtime;
-					int n = host_info.queue.size();
-					auto it = std::find_if(host_info.queue.begin(), host_info.queue.end(), [&job](const auto& ref) {return job == ref->job_; });
-					host_info.queue.erase(it);
-					if (n == host_info.queue.size())
-					{
-						error_("failt to find gene iterator in queue");
-					}
-				}
-				if (host_info.queue.size() == 0)
-				{
-#pragma omp critical
-					{
-						int n = hosts.erase(host);
-						if (n == 0)
-						{
-							error_("fail to remove host info");
-						}
-					}
-				}
-			}
-		}
-// end of parallel
-
-		max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
-		min_span = std::min_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
-
-		for (auto& vec : gene_its_vec)
-		{
-			for (auto& it : vec)
-			{
-				int n = gens.size();
-				gens.erase(it);
-				if (n == gens.size())
-				{
-					error_("fail to remove gene");
-				}
-			}
-		}
-	}
-
-
-
-	GeneAlgorithm::Chromosome GeneAlgorithm::Chromosome::mutation() const
-	{
-		Chromosome c(*this);
-		c.mutate();
-		return  c;
-	}
-	void GeneAlgorithm::Chromosome::mutate()
-	{
-		size_t seed = pseudo_random((size_t)(time(NULL)) ^ (size_t)(this));
-		std::vector<size_t> index;
-		int count = 0;
-		while (index.size() < std::min(MUTATION_GENE,int(gens.size())))
-		{
-			seed = pseudo_random(seed);
-			size_t i = seed % gens.size();
-			if (index.end() == std::find(index.begin(), index.end(), i))
-				index.push_back(i);
-			++count;
-			if (count > 1000)
-			{
-				error_("something wrong with index");
-			}
-		}
-		std::sort(index.begin(), index.end());
-		int i = 0;
-		auto gene_it = gens.begin();
-		for (auto ii : index)
-		{
-			while (i < ii)
-			{
-				++i;
-				++gene_it;
-			}
-			{
-				Host* host = gene_it->host_;
-				auto job = gene_it->job_;
-				auto host_it = hosts.find(host);
 				auto& host_info = host_it->second;
-				host_info.make_span -= gene_it->expected_runtime;
-				max_span = std::max_element(hosts.begin(), hosts.end(), [](const auto& left, const auto& right) {return left.second.make_span < right.second.make_span; })->second.make_span;
-				min_span = std::min_element(hosts.begin(), hosts.end(), [](const auto& left, const auto& right) {return left.second.make_span < right.second.make_span; })->second.make_span;
-				auto it = std::find_if(host_info.queue.begin(), host_info.queue.end(), [&job](const auto& ref) {return job == ref->job_; });
-				host_info.queue.erase(it);
-				if (host_info.queue.size() == 0)
-				{
-					hosts.erase(host_it);
-				}
-			}
-			{
-				Host* host = gene_it->setRandomHost();
-				auto& host_info = hosts[host];
-				bool max_flag = host_info.make_span == max_span;
-				bool min_flag = host_info.make_span == min_span;
-				host_info.make_span += gene_it->expected_runtime;
-				max_span = std::max_element(hosts.begin(), hosts.end(), [](const auto& left, const auto& right) {return left.second.make_span < right.second.make_span; })->second.make_span;
-				min_span = std::min_element(hosts.begin(), hosts.end(), [](const auto& left, const auto& right) {return left.second.make_span < right.second.make_span; })->second.make_span;
-				host_info.queue.push_back(gene_it);
-				host_info.sort();
-			}
+				bool max_flag = (max_span == host_info.make_span);
+				bool min_flag = (min_span == host_info.make_span);
 
+				host_info.make_span -= gene_it->expected_runtime;
+				if (host_info.queue.front()->host_ != host_it->first)
+				{
+					error_("host assigned to job must same with host queue");
+				}
+
+				host_info.queue.pop_front();
+
+				if (max_flag)
+					max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+				if (min_flag)
+					min_span = host_info.make_span;
+			}
 		}
 	}
 	GeneAlgorithm::Chromosome::Chromosome(const Chromosome& ref)
