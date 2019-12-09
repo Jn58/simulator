@@ -76,13 +76,13 @@ namespace ClusterSimulator {
 			{
 				Host* host = it->first;
 				Chromosome::HostInfo& host_info{ it->second };
-				if(host_info.count>0)
+				if(host_info.queue.size()>0)
 				{
-					if (host != host_info.first_job_gene->host_)
+					if (host != host_info.queue.front()->host_)
 					{
 						error("host and first job's host must be same");
 					}
-					std::shared_ptr<Job> job{ host_info.first_job_gene->job_ };
+					std::shared_ptr<Job> job{ host_info.queue.front()->job_ };
 					if (host->is_executable(*job))
 					{
 						host->execute_job(*job);
@@ -138,7 +138,7 @@ namespace ClusterSimulator {
 		auto host_it = hosts.find(gene_it->host_);
 		if (host_it == hosts.end())
 		{
-			host_it = hosts.emplace(gene_it->host_, gene_it).first;
+			host_it = hosts.emplace(gene_it->host_, HostInfo{}).first;
 		}
 		auto& host_info = host_it->second;
 
@@ -146,7 +146,10 @@ namespace ClusterSimulator {
 		bool flag_max = host_info.make_span == max_span;
 
 		host_info.make_span += gene_it->expected_runtime;
-		host_info.count += 1;
+		host_info.queue.push_back(gene_it);
+		host_info.queue.sort([](const auto& left, const auto& right) {
+			return left->job_->submit_time < right->job_->submit_time;
+			});
 
 		if(flag_min)
 			min_span = std::min_element(hosts.begin(), hosts.end(), [](const auto& a, const auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
@@ -172,7 +175,12 @@ namespace ClusterSimulator {
 				bool min_flag = (min_span == host_info.make_span);
 
 				host_info.make_span -= gene_it->expected_runtime;
-				host_info.count -= 1;
+				if (host_info.queue.front()->host_ != host_it->first)
+				{
+					error("host assigned to job must same with host queue");
+				}
+
+				host_info.queue.pop_front();
 
 				if (max_flag)
 					max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
@@ -180,20 +188,9 @@ namespace ClusterSimulator {
 					min_span = host_info.make_span;
 			}
 
-			if (host_it->second.count == 0)
+			if (host_it->second.queue.size()== 0)
 			{
 				hosts.erase(host_it);
-			}
-			else
-			{
-				gens.erase(gene_it);
-				gene_it = gens.begin();
-				while (gene_it != gens.end() && gene_it->host_ != host_it->first) ++gene_it;
-				if (gene_it == gens.end())
-				{
-					error("fail to find gene");
-				}
-				host_it->second.first_job_gene = gene_it;
 			}
 		}
 
@@ -214,8 +211,4 @@ namespace ClusterSimulator {
 		host_ = (Host*)&all_hosts[i];
 		expected_runtime = host_->get_expected_run_time(*job_);
 	}
-	GeneAlgorithm::Chromosome::HostInfo::HostInfo(std::list<Gene>::iterator& first_job_gene) :
-		first_job_gene(first_job_gene),
-		count(0) {};
-
 }
