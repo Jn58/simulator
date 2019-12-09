@@ -137,7 +137,7 @@ namespace ClusterSimulator
 		for (auto& job : pending_jobs_)
 		{
 			job->update_total_pending_duration(simulation_->get_current_time());
-			if (job->total_pending_duration < std::chrono::hours(10))
+			if (job->total_pending_duration < std::chrono::hours(100000))
 				jobs_.push_back(job);
 			else
 			{
