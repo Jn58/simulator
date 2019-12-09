@@ -48,15 +48,15 @@ namespace ClusterSimulator {
 	}
 	void GeneAlgorithm::mutation()
 	{
-		int i;
-		for (i = 0; i < POPULATION_SIZE; ++i)
-		{
-			for (int ii = 0; ii < MUTAION_COUNT; ++ii)
+		if(length > 0)
+			for (int i = 0; i < POPULATION_SIZE; ++i)
 			{
-				Chromosome c = population[i].mutation();
-				population.push_back(c);
+				for (int ii = 0; ii < MUTAION_COUNT; ++ii)
+				{
+					Chromosome c = population[i].mutation();
+					population.push_back(c);
+				}
 			}
-		}
 	}
 
 	void GeneAlgorithm::sort()
@@ -216,11 +216,53 @@ namespace ClusterSimulator {
 				hosts.erase(host);
 			}
 
-			max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
-			min_span = std::min_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
 			gens.erase(gene_it);
 
 		}
+	}
+	GeneAlgorithm::Chromosome GeneAlgorithm::Chromosome::mutation() const
+	{
+		Chromosome c(*this);
+		c.mutate();
+		return c;
+	}
+	void GeneAlgorithm::Chromosome::mutate()
+	{
+		size_t seed = pseudo_random(size_t(time(NULL)) ^ size_t(this)^size_t(clock()));
+		vector<size_t> index;
+		while (index.size() < std::min(size_t(MUTATION_GENE),gens.size()))
+		{
+			seed = pseudo_random(seed);
+			size_t i = seed % gens.size();
+			if (find(index.begin(), index.end(), i) == index.end())
+				index.push_back(i);
+		}
+		size_t i = 0;
+		list<Gene>::iterator gene_it = gens.begin();
+		std::sort(index.begin(), index.end());
+		for (size_t ii : index)
+		{
+			while (i < ii)
+			{
+				++i;
+				++gene_it;
+			}
+			Host* host{ gene_it->host_ };
+			HostInfo& host_info{ hosts[host] };
+			--host_info.count;
+			host_info.make_span -= gene_it->expected_runtime;
+			
+			host = gene_it->setRandomHost();
+
+			HostInfo& new_host_info{ hosts[host] };
+			++new_host_info.count;
+			new_host_info.make_span += gene_it->expected_runtime;
+			++i;
+			++gene_it;
+		}
+
+		max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+		min_span = std::min_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
 	}
 	GeneAlgorithm::Chromosome::Chromosome(const Chromosome& ref)
 	{
