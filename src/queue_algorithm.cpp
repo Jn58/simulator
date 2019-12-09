@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iterator>
 #include "error.h"
+#include <omp.h>
 
 
 namespace ClusterSimulator {
@@ -71,30 +72,68 @@ namespace ClusterSimulator {
 		{
 			Chromosome& best_chromosome{ getBestChromosome() };
 			std::map<Host*, Chromosome::HostInfo>& best_hosts{ best_chromosome.hosts };
-			std::vector<std::shared_ptr<Job>> excuted_jobs;
+			//std::vector<std::shared_ptr<Job>> excuted_jobs;
+
+			std::vector<std::map<Host*, Chromosome::HostInfo>::iterator> hosts;
+
 			for (auto it = best_hosts.begin(); it != best_hosts.end(); ++it)
 			{
-				Host* host = it->first;
-				Chromosome::HostInfo& host_info{ it->second };
-				if(host_info.queue.size()>0)
+				hosts.push_back(it);
+			}
+
+			int thread_num = std::min(omp_get_max_threads(),int(hosts.size()));
+			//thread_num = 1;
+			std::vector <std::vector<std::shared_ptr<Job>>> excuted_jobs_vec(thread_num);
+			std::vector<std::shared_ptr<Job>> excuted_jobs;
+			int i;
+#pragma omp parallel num_threads(thread_num)
+			{
+#pragma omp for
+				for (i = 0; i < best_hosts.size(); ++i)
 				{
-					if (host != host_info.queue.front()->host_)
+					auto tid = omp_get_thread_num();
+
+					Host* host{ hosts[i]->first };
+					Chromosome::HostInfo& host_info{ hosts[i]->second };
+					if (host_info.queue.size() == 0)
+					{
+						error("host info queue length must bigger than 0");
+					}
+					if (host != hosts[i]->second.queue.front()->host_)
 					{
 						error("host and first job's host must be same");
 					}
 					std::shared_ptr<Job> job{ host_info.queue.front()->job_ };
 					if (host->is_executable(*job))
 					{
+#pragma omp critical
 						host->execute_job(*job);
-						excuted_jobs.push_back(job);
+						excuted_jobs_vec[tid].push_back(job);
 					}
 				}
-				else
-				{
-					error("host info count must not be 0");
-				}
 			}
-			deleteJobs(excuted_jobs);
+
+			for (auto& vec : excuted_jobs_vec)
+			{
+				excuted_jobs.insert(excuted_jobs.end(), vec.begin(), vec.end());
+			}
+
+		/*	for (i = 0; i < thread_num; ++i)
+			{
+				for (int j = 0; j < excuted_host[i].size(); ++j)
+				{
+					auto& job{ excuted_jobs_vec[i][j] };
+					excuted_host[i][j]->execute_job(*job);
+					excuted_jobs.push_back(job);
+
+				}
+			}*/
+
+			if (!excuted_jobs.empty())
+			{
+				deleteJobs(excuted_jobs);
+			}
+
 		}
 	}
 	bool GeneAlgorithm::check(std::vector<std::shared_ptr<Job>>& jobs)
