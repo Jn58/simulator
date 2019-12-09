@@ -9,6 +9,7 @@
 #include <ctime>
 
 #define POPULATION_SIZE 2
+#define MUTAION_COUNT 2
 namespace ClusterSimulator
 {
 	// TODO: As Template
@@ -109,7 +110,7 @@ namespace ClusterSimulator
 		void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 		void update_pedding_job() {};
 		GeneAlgorithm::Chromosome& getBestChromosome();
-		void mutation() {};
+		void mutation();
 		void crossOver() {};
 		void sort() {};
 		void dropout() {};
