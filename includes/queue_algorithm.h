@@ -76,6 +76,7 @@ namespace ClusterSimulator
 				std::chrono::milliseconds make_span = std::chrono::milliseconds(0);
 				std::list<std::list<Gene>::iterator> queue;
 				HostInfo() {};
+				void sort();
 			};
 
 			std::list<Gene> gens;
