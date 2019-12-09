@@ -9,8 +9,8 @@
 #include <ctime>
 
 #define POPULATION_SIZE 2
-#define MUTAION_COUNT 3
-#define MUTATION_GENE 3
+#define MUTAION_COUNT 2
+#define MUTATION_GENE 2
 
 namespace ClusterSimulator
 {
