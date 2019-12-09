@@ -368,7 +368,7 @@ namespace ClusterSimulator {
 		}
 		for (auto& host_it : hosts)
 		{
-			hosts[host_it.first].make_span = ref.hosts[host_it.first].make_span;
+			hosts[host_it.first].make_span = ref.hosts.at(host_it.first).make_span;
 			host_it.second.sort();
 		}
 	}
