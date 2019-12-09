@@ -16,6 +16,7 @@ size_t pseudo_random(size_t x)
 
 
 namespace ClusterSimulator {
+	using namespace std;
 	void GeneAlgorithm::enqueJobs(std::vector<std::shared_ptr<Job>>& jobs)
 	{
 		for(auto job : jobs)
@@ -109,76 +110,30 @@ namespace ClusterSimulator {
 	}
 	void GeneAlgorithm::exec()
 	{
+
 		if (length != 0)
 		{
 			Chromosome& best_chromosome{ getBestChromosome() };
-			std::map<Host*, Chromosome::HostInfo>& best_hosts{ best_chromosome.hosts };
-			//std::vector<std::shared_ptr<Job>> excuted_jobs;
+			list<Chromosome::Gene>& gens{ best_chromosome.gens };
+			map<Host*, Chromosome::HostInfo>& hosts{ best_chromosome.hosts };
+			vector<shared_ptr<Job>> excuted_job;
 
-			std::vector<std::map<Host*, Chromosome::HostInfo>::iterator> hosts_vec;
-
-			for (auto it = best_hosts.begin(); it != best_hosts.end(); ++it)
+			for (auto host_it : hosts)
 			{
-				hosts_vec.push_back(it);
-			}
-
-			int thread_num = std::min(omp_get_max_threads(),int(hosts_vec.size()));
-			thread_num = 1;
-			//thread_num = 1;
-			std::vector <std::vector<std::shared_ptr<Job>>> excuted_jobs_vec(thread_num);
-			std::vector<std::shared_ptr<Job>> excuted_jobs;
-#pragma omp parallel num_threads(thread_num)
-			{
-#pragma omp for
-				for (int i = 0; i < hosts_vec.size(); ++i)
+				Host* host{ host_it.first };
+				Chromosome::HostInfo& host_info{ host_it.second };
+				if (host_info.count > 0)
 				{
-					auto tid = omp_get_thread_num();
+					shared_ptr<Job> job = find_if(gens.begin(), gens.end(), [&host](const Chromosome::Gene& gene) {return gene.host_ == host; })->job_;
 
-					Host* host{ hosts_vec[i]->first };
-					Chromosome::HostInfo& host_info{ hosts_vec[i]->second };
-					if (host_info.queue.size() == 0)
-					{
-						error_("host info queue length must bigger than 0");
-					}
-					auto& front = host_info.queue.front();
-					if (host != front->host_)
-					{
-						error_("host and first job's host must be same");
-					}
-					std::shared_ptr<Job>& job{ front->job_ };
 					if (host->is_executable(*job))
 					{
-#pragma omp critical
-						{
-							 host->execute_job(*job);
-						}
-						excuted_jobs_vec[tid].push_back(job);
+						host->execute_job(*job);
+						excuted_job.push_back(job);
 					}
 				}
 			}
-// end of parallel
-
-			for (const auto& vec : excuted_jobs_vec)
-			{
-				excuted_jobs.insert(excuted_jobs.end(), vec.begin(), vec.end());
-			}
-
-		/*	for (i = 0; i < thread_num; ++i)
-			{
-				for (int j = 0; j < excuted_host[i].size(); ++j)
-				{
-					auto& job{ excuted_jobs_vec[i][j] };
-					excuted_host[i][j]->execute_job(*job);
-					excuted_jobs.push_back(job);
-
-				}
-			}*/
-
-			if (!excuted_jobs.empty())
-			{
-				deleteJobs(excuted_jobs);
-			}
-
+			deleteJobs(excuted_job);
 		}
 	}
 	bool GeneAlgorithm::check(const std::vector<std::shared_ptr<Job>>& jobs) const
@@ -229,8 +184,7 @@ namespace ClusterSimulator {
 
 
 		host_info.make_span += gene_it->expected_runtime;
-		host_info.queue.push_back(gene_it);
-		host_info.sort();
+		++host_info.count;
 
 		min_span = std::min_element(hosts.begin(), hosts.end(), [](const auto& a, const auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
 		max_span = std::max_element(hosts.begin(), hosts.end(), [](const auto& a, const auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
@@ -240,33 +194,32 @@ namespace ClusterSimulator {
 	{
 		for(auto job : jobs)
 		{
-			auto gene_it = gens.begin();
-			while (gene_it != gens.end() && gene_it->job_ != job) gene_it = next(gene_it);
+			list<Gene>::iterator gene_it = find_if(gens.begin(), gens.end(), [&job](const Gene& gene) {return gene.job_ == job; });
 			if (gene_it == gens.end())
 			{
 				error_("fail to find gene");
 			}
-
-			auto host_it = hosts.find(gene_it->host_);
-
+			Host* host{ gene_it->host_ };
+			auto host_it = hosts.find(host);
+			if (hosts.end() == host_it)
 			{
-				auto& host_info = host_it->second;
-				bool max_flag = (max_span == host_info.make_span);
-				bool min_flag = (min_span == host_info.make_span);
-
-				host_info.make_span -= gene_it->expected_runtime;
-				if (host_info.queue.front()->host_ != host_it->first)
-				{
-					error_("host assigned to job must same with host queue");
-				}
-
-				host_info.queue.pop_front();
-
-				if (max_flag)
-					max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
-				if (min_flag)
-					min_span = host_info.make_span;
+				error_("fail to find host info");
 			}
+
+			auto& host_info = host_it->second;
+
+			host_info.make_span -= gene_it->expected_runtime;
+			--host_info.count;
+
+			if (host_info.count == 0)
+			{
+				hosts.erase(host);
+			}
+
+			max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+			min_span = std::min_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+			gens.erase(gene_it);
+
 		}
 	}
 	GeneAlgorithm::Chromosome::Chromosome(const Chromosome& ref)
@@ -274,15 +227,16 @@ namespace ClusterSimulator {
 		max_span = ref.max_span;
 		min_span = ref.min_span;
 		gens = ref.gens;
-		for(auto it = gens.begin(); it!= gens.end() ; ++it)
+		for(auto& gene : gens)
 		{
-			hosts[it->host_].queue.push_back(it);
-			hosts[it->host_].make_span += it->expected_runtime;
-		}
-		for (auto& host_it : hosts)
-		{
-			hosts[host_it.first].make_span = ref.hosts.at(host_it.first).make_span;
-			host_it.second.sort();
+			Host* host{ gene.host_ };
+			shared_ptr<Job> job{ gene.job_ };
+			auto it = hosts.find(host);
+			if (it == hosts.end()) hosts[host] = HostInfo();
+			auto& host_info{ hosts[host] };
+
+			++host_info.count;
+			host_info.make_span += gene.expected_runtime;
 		}
 	}
 	GeneAlgorithm::Chromosome::Gene::Gene(std::shared_ptr<Job> job): job_(job)
@@ -309,11 +263,5 @@ namespace ClusterSimulator {
 		host_ = &all_hosts[i]; 
 		expected_runtime = host_->get_expected_run_time(*job_);
 		return host_;
-	}
-	void GeneAlgorithm::Chromosome::HostInfo::sort()
-	{
-		queue.sort([](const auto& left, const auto& right) {
-			return left->job_->submit_time < right->job_->submit_time;
-			});
 	}
 }
