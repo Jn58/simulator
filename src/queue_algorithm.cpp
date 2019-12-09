@@ -45,6 +45,18 @@ namespace ClusterSimulator {
 	{
 		return population[0];
 	}
+	void GeneAlgorithm::mutation()
+	{
+		int i;
+		for (i = 0; i < POPULATION_SIZE; ++i)
+		{
+			for (int ii = 0; ii < MUTAION_COUNT; ++ii)
+			{
+				Chromosome c = population[i].mutation();
+				population.push_back(c);
+			}
+		}
+	}
 	bool GeneAlgorithm::run_job(std::shared_ptr<Job> job)
 {
 		std::vector<Host*> eligible_hosts{ job->get_eligible_hosts() };
