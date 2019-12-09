@@ -71,11 +71,9 @@ namespace ClusterSimulator
 			class HostInfo
 			{
 			public:
-				int count = 0;
 				std::chrono::milliseconds make_span = std::chrono::milliseconds(0);
-				std::list<Gene>::iterator first_job_gene = std::list<Gene>::iterator();
+				std::list<std::list<Gene>::iterator> queue;
 				HostInfo() {};
-				HostInfo(std::list<Gene>::iterator& first_job_gene);
 			};
 
 			std::list<Gene> gens;
