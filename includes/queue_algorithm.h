@@ -10,6 +10,7 @@
 
 #define POPULATION_SIZE 2
 #define MUTAION_COUNT 2
+#define MUTATION_GENE 3
 namespace ClusterSimulator
 {
 	// TODO: As Template
@@ -93,7 +94,7 @@ namespace ClusterSimulator
 
 			Chromosome mutation() const{
 				return Chromosome();
-			};
+			void mutate();
 
 			Chromosome crossOver(const Chromosome& other) const {
 				return Chromosome();

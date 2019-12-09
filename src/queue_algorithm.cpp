@@ -278,6 +278,66 @@ namespace ClusterSimulator {
 
 		}
 
+	void GeneAlgorithm::Chromosome::mutate()
+	{
+		unsigned int seed = pseudo_random((unsigned int)(time(NULL)) ^ (unsigned int)(this));
+		std::vector<unsigned int> index;
+		int count = 0;
+		while (index.size() < std::min(3,int(gens.size())))
+		{
+			seed = pseudo_random(seed);
+			unsigned int i = seed % gens.size();
+			if (index.end() == std::find(index.begin(), index.end(), i))
+				index.push_back(i);
+			++count;
+			if (count > 1000)
+			{
+				error("something wrong with index");
+			}
+		}
+		std::sort(index.begin(), index.end());
+		int i = 0;
+		auto gene_it = gens.begin();
+		for (auto ii : index)
+		{
+			while (i < ii)
+			{
+				++i;
+				++gene_it;
+			}
+			{
+				Host* host = gene_it->host_;
+				auto host_it = hosts.find(host);
+				auto& host_info = host_it->second;
+				bool max_flag = host_info.make_span == max_span;
+				bool min_flag = host_info.make_span == min_span;
+				host_info.make_span -= gene_it->expected_runtime;
+				if (max_flag)
+					max_span = std::max_element(hosts.begin(), hosts.end(), [](const auto& left, const auto& right) {return left.second.make_span < right.second.make_span; })->second.make_span;
+				if (min_flag)
+					min_span = host_info.make_span;
+				host_info.queue.remove(gene_it);
+				if (host_info.queue.size() == 0)
+				{
+					hosts.erase(host_it);
+				}
+			}
+			{
+				Host* host = gene_it->setRandomHost();
+				auto& host_info = hosts[host];
+				bool max_flag = host_info.make_span == max_span;
+				bool min_flag = host_info.make_span == min_span;
+				host_info.make_span += gene_it->expected_runtime;
+				if (max_flag)
+					max_span = host_info.make_span;
+				if (min_flag)
+					min_span = std::min_element(hosts.begin(), hosts.end(), [](const auto& left, const auto& right) {return left.second.make_span < right.second.make_span; })->second.make_span;
+				host_info.queue.push_back(gene_it);
+				host_info.sort();
+			}
+
+		}
+	}
 	GeneAlgorithm::Chromosome::Chromosome(const Chromosome& ref)
 	{
 		max_span = ref.max_span;
