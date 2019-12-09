@@ -3,7 +3,7 @@
 #include <cluster_simulation.h>
 #include <algorithm>
 #include <iterator>
-#include "error.h"
+#include "error_.h"
 #include <omp.h>
 
 size_t pseudo_random(size_t x)
@@ -135,11 +135,11 @@ namespace ClusterSimulator {
 					Chromosome::HostInfo& host_info{ hosts[i]->second };
 					if (host_info.queue.size() == 0)
 					{
-						error("host info queue length must bigger than 0");
+						error_("host info queue length must bigger than 0");
 					}
 					if (host != hosts[i]->second.queue.front()->host_)
 					{
-						error("host and first job's host must be same");
+						error_("host and first job's host must be same");
 					}
 					std::shared_ptr<Job> job{ host_info.queue.front()->job_ };
 					if (host->is_executable(*job))
@@ -186,7 +186,7 @@ namespace ClusterSimulator {
 		if (pedding_n != length)
 		{
 			printf("%d\n", this->length);
-			error("pedding_n and length must be same");
+			error_("pedding_n and length must be same");
 		}
 
 		if (pedding_n + count != jobs.size())
@@ -196,7 +196,7 @@ namespace ClusterSimulator {
 				if (job->state != JobState::PEND && job->state != JobState::WAIT)
 					printf("%d\n", job->state);
 			}
-			error("wrong state");
+			error_("wrong state");
 		}
 
 		return true;
@@ -245,14 +245,14 @@ namespace ClusterSimulator {
 				while (gene_it != gens.end() && gene_it->job_ != job) gene_it = next(gene_it);
 				if (gene_it == gens.end())
 				{
-					error("fail to find gene");
+					error_("fail to find gene");
 				}
 
 				auto host{ gene_it->host_ };
 				auto host_it = hosts.find(host);
 				if (host_it == hosts.end())
 				{
-					error("can not fild host info for gene");
+			assigned_hosts_vec.push_back(it);
 				}
 
 				
@@ -271,7 +271,7 @@ namespace ClusterSimulator {
 				while (it != host_info.queue.end() && (*it)->job_ != job) ++it;
 				if (it == host_info.queue.end())
 				{
-					error("can not find job in host info queue");
+						error_("failt to find gene iterator in queue");
 				}
 #pragma omp critical
 				{
@@ -310,7 +310,7 @@ namespace ClusterSimulator {
 			++count;
 			if (count > 1000)
 			{
-				error("something wrong with index");
+				error_("something wrong with index");
 			}
 		}
 		std::sort(index.begin(), index.end());
