@@ -98,6 +98,9 @@ namespace ClusterSimulator
 				return Chromosome();
 			};
 
+			Chromosome() {};
+			Chromosome(const Chromosome& ref);
+
 		};
 
 		size_t length = 0;

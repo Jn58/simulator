@@ -278,6 +278,22 @@ namespace ClusterSimulator {
 
 		}
 
+	GeneAlgorithm::Chromosome::Chromosome(const Chromosome& ref)
+	{
+		max_span = ref.max_span;
+		min_span = ref.min_span;
+		gens = ref.gens;
+		for(auto it = gens.begin(); it!= gens.end() ; ++it)
+		{
+			hosts[it->host_].queue.push_back(it);
+			hosts[it->host_].make_span += it->expected_runtime;
+		}
+		for (auto& host_it : hosts)
+		{
+			hosts[host_it.first].make_span = ref.hosts[host_it.first].make_span;
+			host_it.second.sort();
+		}
+
 	}
 	GeneAlgorithm::Chromosome::Gene::Gene(std::shared_ptr<Job> job): job_(job)
 	{	
