@@ -128,7 +128,7 @@ namespace ClusterSimulator
 		void step();
 
 		void exec();
-		bool check(std::vector<std::shared_ptr<Job>>& jobs) const;
+		bool check(const std::vector<std::shared_ptr<Job>>& jobs) const;
 
 	
 		void run(std::vector<std::shared_ptr<Job>>& jobs) override;
