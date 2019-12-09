@@ -278,6 +278,13 @@ namespace ClusterSimulator {
 
 		}
 
+	}
+	GeneAlgorithm::Chromosome GeneAlgorithm::Chromosome::mutation() const
+	{
+		Chromosome c(*this);
+		c.mutate();
+		return  c;
+	}
 	void GeneAlgorithm::Chromosome::mutate()
 	{
 		unsigned int seed = pseudo_random((unsigned int)(time(NULL)) ^ (unsigned int)(this));

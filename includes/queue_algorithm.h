@@ -92,8 +92,8 @@ namespace ClusterSimulator
 			void enqueJob(std::shared_ptr<Job> job);
 			void chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 
-			Chromosome mutation() const{
-				return Chromosome();
+			Chromosome mutation() const;
+
 			void mutate();
 
 			Chromosome crossOver(const Chromosome& other) const {
