@@ -174,7 +174,7 @@ namespace ClusterSimulator {
 
 		}
 	}
-	bool GeneAlgorithm::check(std::vector<std::shared_ptr<Job>>& jobs)
+	bool GeneAlgorithm::check(std::vector<std::shared_ptr<Job>>& jobs) const
 	{
 		size_t count = 0;
 		size_t pedding_n = 0;
