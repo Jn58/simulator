@@ -60,10 +60,10 @@ namespace ClusterSimulator {
 	void GeneAlgorithm::sort()
 	{
 		std::sort(population.begin(), population.end(), [](const auto& left, const auto& right) {
-			if (left.max_span < right.max_sapn) return true;
+			if (left.max_span < right.max_span) return true;
 			if (left.max_span != right.max_span) return false;
 			if (left.hosts.size() > right.hosts.size()) return true;
-			if (left.host.size() == right.hosts.size()) return false;
+			if (left.hosts.size() != right.hosts.size()) return false;
 			if (left.min_span > right.min_span) return true;
 			return false;
 			});

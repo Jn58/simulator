@@ -121,7 +121,9 @@ namespace ClusterSimulator
 		void mutation();
 		void crossOver() {};
 		void sort();
-		void dropout() {};
+		void dropout() {
+			population.erase(population.begin() + POPULATION_SIZE, population.end());
+		};
 
 		void step();
 
