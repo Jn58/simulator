@@ -189,7 +189,7 @@ namespace ClusterSimulator
 					a = scenario_.count();
 					b = 1 + a - 1;
 
-					std::cout << "\33[2K\r" << "Remaining scenarios: " << scenario_.count() << std::endl;
+					std::cout << "\33[2K\r" << "Remaining scenarios: " << scenario_.count();
 
 				}
 
