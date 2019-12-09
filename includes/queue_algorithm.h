@@ -68,6 +68,7 @@ namespace ClusterSimulator
 				~Gene() = default;
 
 				std::chrono::milliseconds setHost(Host* host) {};
+				Host* setRandomHost();
 			};
 
 			class HostInfo

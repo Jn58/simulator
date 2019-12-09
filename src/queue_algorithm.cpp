@@ -293,29 +293,29 @@ namespace ClusterSimulator {
 			hosts[host_it.first].make_span = ref.hosts[host_it.first].make_span;
 			host_it.second.sort();
 		}
-
 	}
 	GeneAlgorithm::Chromosome::Gene::Gene(std::shared_ptr<Job> job): job_(job)
 	{	
-		const std::vector<Host>& all_hosts{ job->queue_managing_this_job->simulation_->get_cluster().vector() };
-		//auto queue = job->queue_managing_this_job;
-		//auto simulation = queue->simulation_;
-		//auto& cluster = simulation->get_cluster();
-		//auto& all_hosts = cluster.vector();
-		size_t n = all_hosts.size();
-		int i = rand() % n;
-		while (all_hosts[i].max_slot < job->slot_required || all_hosts[i].max_mem < job->mem_required)
-		{
-			i = rand() % n;
-		}
-		host_ = (Host*)&all_hosts[i];
-		expected_runtime = host_->get_expected_run_time(*job_);
+		setRandomHost();
 	}
 	GeneAlgorithm::Chromosome::Gene::Gene(const Gene& ref) :
 		job_(ref.job_),
 		host_(ref.host_),
 		expected_runtime(ref.expected_runtime)
 	{}
+	Host* GeneAlgorithm::Chromosome::Gene::setRandomHost()
+	{
+		const std::vector<Host>& all_hosts{ job_->queue_managing_this_job->simulation_->get_cluster().vector() };
+		size_t n = all_hosts.size();
+		int i = rand() % n;
+		while (all_hosts[i].max_slot < job_->slot_required || all_hosts[i].max_mem < job_->mem_required)
+		{
+			i = rand() % n;
+		}
+		host_ = (Host*)&all_hosts[i]; 
+		expected_runtime = host_->get_expected_run_time(*job_);
+		return host_;
+	}
 	void GeneAlgorithm::Chromosome::HostInfo::sort()
 	{
 		queue.sort([](const auto& left, const auto& right) {
