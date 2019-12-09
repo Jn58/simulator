@@ -298,4 +298,9 @@ namespace ClusterSimulator {
 		host_ = (Host*)&all_hosts[i];
 		expected_runtime = host_->get_expected_run_time(*job_);
 	}
+	GeneAlgorithm::Chromosome::Gene::Gene(const Gene& ref) :
+		job_(ref.job_),
+		host_(ref.host_),
+		expected_runtime(ref.expected_runtime)
+	{}
 }

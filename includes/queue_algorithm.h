@@ -63,6 +63,7 @@ namespace ClusterSimulator
 				std::chrono::milliseconds expected_runtime = std::chrono::milliseconds(0);
 				
 				Gene(std::shared_ptr<Job> job);
+				Gene(const Gene& ref);
 				Gene() {};
 				~Gene() = default;
 
