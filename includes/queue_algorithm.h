@@ -9,11 +9,12 @@
 #include <ctime>
 
 #define POPULATION_SIZE 2
-#define MUTAION_COUNT 2
+#define MUTAION_COUNT 3
 #define MUTATION_GENE 3
 
 namespace ClusterSimulator
 {
+	using namespace std;
 	// TODO: As Template
 	class QueueAlgorithm
 	{
@@ -77,9 +78,8 @@ namespace ClusterSimulator
 			{
 			public:
 				std::chrono::milliseconds make_span = std::chrono::milliseconds(0);
-				std::list<std::list<Gene>::iterator> queue;
+				size_t count = 0;
 				HostInfo() {};
-				void sort();
 			};
 
 			std::list<Gene> gens;
@@ -93,9 +93,9 @@ namespace ClusterSimulator
 			void enqueJob(std::shared_ptr<Job> job);
 			void chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 
-			Chromosome mutation() const;
+			Chromosome mutation() const { return Chromosome(); };
 
-			void mutate();
+			void mutate() {};
 
 			Chromosome crossOver(const Chromosome& other) const {
 				return Chromosome();
