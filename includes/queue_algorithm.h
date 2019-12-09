@@ -96,6 +96,7 @@ namespace ClusterSimulator
 			Chromosome mutation() const;
 
 			void mutate();
+			void update_span();
 
 			Chromosome crossOver(const Chromosome& other) const {
 				return Chromosome();

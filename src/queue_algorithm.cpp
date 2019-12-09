@@ -186,8 +186,7 @@ namespace ClusterSimulator {
 		host_info.make_span += gene_it->expected_runtime;
 		++host_info.count;
 
-		min_span = std::min_element(hosts.begin(), hosts.end(), [](const auto& a, const auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
-		max_span = std::max_element(hosts.begin(), hosts.end(), [](const auto& a, const auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+		update_span();
 
 	}
 	void GeneAlgorithm::Chromosome::chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs)
@@ -219,6 +218,7 @@ namespace ClusterSimulator {
 			gens.erase(gene_it);
 
 		}
+		update_span();
 	}
 	GeneAlgorithm::Chromosome GeneAlgorithm::Chromosome::mutation() const
 	{
@@ -261,6 +261,11 @@ namespace ClusterSimulator {
 			++gene_it;
 		}
 
+		update_span();
+
+	}
+	void GeneAlgorithm::Chromosome::update_span()
+	{
 		max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
 		min_span = std::min_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
 	}
@@ -280,6 +285,7 @@ namespace ClusterSimulator {
 			++host_info.count;
 			host_info.make_span += gene.expected_runtime;
 		}
+		update_span();
 	}
 	GeneAlgorithm::Chromosome::Gene::Gene(std::shared_ptr<Job> job): job_(job)
 	{	
