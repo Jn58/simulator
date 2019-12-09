@@ -6,11 +6,11 @@
 #include "error.h"
 #include <omp.h>
 
-unsigned int pseudo_random(unsigned int x)
+size_t pseudo_random(size_t x)
 {
 	x ^= x << 13;
-	x ^= x >> 17;
-	x ^= x << 5;
+	x ^= x >> 7;
+	x ^= x << 17;
 	return x;
 }
 
@@ -298,13 +298,13 @@ namespace ClusterSimulator {
 	}
 	void GeneAlgorithm::Chromosome::mutate()
 	{
-		unsigned int seed = pseudo_random((unsigned int)(time(NULL)) ^ (unsigned int)(this));
-		std::vector<unsigned int> index;
+		size_t seed = pseudo_random((size_t)(time(NULL)) ^ (size_t)(this));
+		std::vector<size_t> index;
 		int count = 0;
-		while (index.size() < std::min(3,int(gens.size())))
+		while (index.size() < std::min(MUTATION_GENE,int(gens.size())))
 		{
 			seed = pseudo_random(seed);
-			unsigned int i = seed % gens.size();
+			size_t i = seed % gens.size();
 			if (index.end() == std::find(index.begin(), index.end(), i))
 				index.push_back(i);
 			++count;
@@ -385,7 +385,7 @@ namespace ClusterSimulator {
 	{
 		std::vector<Host>& all_hosts{ job_->queue_managing_this_job->simulation_->get_cluster().vector() };
 		size_t n = all_hosts.size();
-		unsigned int seed = pseudo_random((unsigned int)(time(NULL)) ^ (unsigned int)(this)^(unsigned int)(clock())^(unsigned int)(&*job_));
+		size_t seed = pseudo_random((size_t)(time(NULL)) ^ (size_t)(this)^(size_t)(clock())^(size_t)(&*job_));
 		seed = pseudo_random(seed);
 		int i = seed % n;
 		while (all_hosts[i].max_slot < job_->slot_required || all_hosts[i].max_mem < job_->mem_required)
