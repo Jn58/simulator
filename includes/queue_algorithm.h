@@ -105,7 +105,7 @@ namespace ClusterSimulator
 			shared_ptr<Gene> tail=nullptr;
 			size_t size = 0;
 
-			std::map<shared_ptr<Job>, shared_ptr<Gene>> job_map;
+			//std::map<shared_ptr<Job>, shared_ptr<Gene>> job_map;
 			std::map<Host*, HostInfo> hosts;
 			void detach(shared_ptr<Gene> gene);
 
