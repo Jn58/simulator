@@ -19,17 +19,67 @@ namespace ClusterSimulator {
 	using namespace std;
 	void GeneAlgorithm::enqueJobs(std::vector<std::shared_ptr<Job>>& jobs)
 	{
-		for (auto job : jobs)
+		int num_threads = std::min(jobs.size(), size_t(omp_get_max_threads()));
+		vector<vector<shared_ptr<Job>>> queued_jobs_vec(num_threads);
+		vector<shared_ptr<Job>> queued_jobs;
+#pragma omp parallel num_threads(num_threads)
 		{
-			if (job->state == JobState::WAIT)
-				if (!run_job(job))
+#pragma omp for
+			for (int i = 0; i < jobs.size(); ++i)
+			{
+				if (jobs[i]->state == JobState::WAIT)
 				{
-					for (auto& p : population)
+					int tid = omp_get_thread_num();
+					auto& job = jobs[i];
+					std::vector<Host*> eligible_hosts{ job->get_eligible_hosts() };
+					std::vector<Host*> idel_hosts;
+					auto& hosts = getBestChromosome().hosts;
+
+					if (eligible_hosts.empty())
 					{
-						p.enqueJob(job);
+						queued_jobs_vec[tid].push_back(job);
+						continue;
 					}
-					length += 1;
+
+					for (Host* h_ptr : eligible_hosts)
+					{
+						if (hosts.find(h_ptr) == hosts.end())
+						{
+							idel_hosts.push_back(h_ptr);
+						}
+					}
+					if (idel_hosts.empty())
+					{
+						queued_jobs_vec[tid].push_back(job);
+						continue;
+					}
+
+					Host* best_host = *std::min_element(idel_hosts.begin(), idel_hosts.end(),
+						[&job](const Host* a, const Host* b)
+						{
+							return a->get_expected_run_time(*job) < b->get_expected_run_time(*job);
+						});
+#pragma omp critical
+					{
+						best_host->execute_job(*job);
+					}
 				}
+
+			}
+#pragma omp barrier
+#pragma omp single
+			{
+				for (auto& vec : queued_jobs_vec)
+				{
+					queued_jobs.insert(queued_jobs.end(), vec.begin(), vec.end());
+				}
+				length += queued_jobs.size();
+			}
+#pragma omp for
+			for (int i = 0; i < POPULATION_SIZE; ++i)
+			{
+				population[i].enqueJobs(queued_jobs);
+			}
 		}
 	}
 	void GeneAlgorithm::deleteJobs(std::vector<std::shared_ptr<Job>>& executed_jobs)
@@ -182,7 +232,7 @@ namespace ClusterSimulator {
 	void GeneAlgorithm::Chromosome::detach(shared_ptr<Gene> gene)
 	{
 		
-		job_map.erase(gene->job_);
+		//job_map.erase(gene->job_);
 		gene->pre->next = gene->next;
 		gene->next->pre = gene->pre;
 		gene->next = gene->pre = nullptr;
@@ -197,6 +247,19 @@ namespace ClusterSimulator {
 		Host* host = gene->host_;
 		auto& host_info = hosts[host];
 		host_info.insert(gene);
+		update_span();
+	}
+	void GeneAlgorithm::Chromosome::enqueJobs(std::vector<std::shared_ptr<Job>>& jobs)
+	{
+		for (auto& job : jobs)
+		{
+			shared_ptr<Gene> gene(new Gene(job));
+			insert(gene);
+			Host* host = gene->host_;
+			auto it = hosts.insert({ host,HostInfo() }).first;
+			auto& host_info = it->second;
+			host_info.insert(gene);
+		}
 		update_span();
 	}
 	void GeneAlgorithm::Chromosome::chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs)
@@ -332,7 +395,7 @@ namespace ClusterSimulator {
 
 	void GeneAlgorithm::Chromosome::insert(shared_ptr<GeneAlgorithm::Chromosome::Gene> gene)
 	{
-		job_map[gene->job_] = gene;
+		//job_map[gene->job_] = gene;
 		auto cur = tail->pre;
 		while (cur != head && cur->job_->submit_time < gene->job_->submit_time) cur = cur->pre;
 		cur->insert_back(gene);
@@ -341,7 +404,10 @@ namespace ClusterSimulator {
 
 	shared_ptr<GeneAlgorithm::Chromosome::Gene> GeneAlgorithm::Chromosome::find(shared_ptr<Job> job)
 	{
-		return job_map[job];
+		auto cur = head->next;
+		while (cur->job_ != job) cur = cur->next;
+		return cur;
+		//return job_map[job];
 	}
 
 	void GeneAlgorithm::Chromosome::HostInfo::insert(shared_ptr<Gene> gene)
