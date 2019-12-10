@@ -347,6 +347,12 @@ namespace ClusterSimulator {
 		host_(ref.host_),
 		expected_runtime(ref.expected_runtime)
 	{}
+	GeneAlgorithm::Chromosome::Gene::~Gene()
+	{
+		pre = next = host_pre = host_next = nullptr;
+		host_ = nullptr;
+		job_ = nullptr;
+	}
 	Host* GeneAlgorithm::Chromosome::Gene::setRandomHost()
 	{
 		std::vector<Host>& all_hosts{ job_->queue_managing_this_job->simulation_->get_cluster().vector() };

@@ -72,7 +72,7 @@ namespace ClusterSimulator
 				Gene(std::shared_ptr<Job> job);
 				Gene(const Gene& ref);
 				Gene() {};
-				~Gene() = default;
+				~Gene();
 
 				std::chrono::milliseconds setHost(Host* host) {};
 				Host* setRandomHost();
