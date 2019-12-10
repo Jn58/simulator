@@ -115,6 +115,7 @@ namespace ClusterSimulator
 			size_t len(){ return size; };
 
 			void enqueJob(std::shared_ptr<Job> job);
+			void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs);
 			void chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 
 			Chromosome mutation() const;
