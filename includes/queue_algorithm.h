@@ -64,6 +64,10 @@ namespace ClusterSimulator
 				std::shared_ptr<Job> job_ = nullptr;
 				Host* host_ = nullptr;
 				std::chrono::milliseconds expected_runtime = std::chrono::milliseconds(0);
+				shared_ptr<Gene> pre=nullptr;
+				shared_ptr<Gene> next=nullptr;
+				shared_ptr<Gene> host_pre=nullptr;
+				shared_ptr<Gene> host_next=nullptr;
 				
 				Gene(std::shared_ptr<Job> job);
 				Gene(const Gene& ref);
@@ -72,23 +76,43 @@ namespace ClusterSimulator
 
 				std::chrono::milliseconds setHost(Host* host) {};
 				Host* setRandomHost();
+
+				void insert_front(shared_ptr<Gene> ptr);
+				void insert_back(shared_ptr<Gene> ptr);
+				void insert_host_front(shared_ptr<Gene> ptr);
+				void insert_host_back(shared_ptr<Gene> ptr);
+
 			};
 
 			class HostInfo
 			{
 			public:
 				std::chrono::milliseconds make_span = std::chrono::milliseconds(0);
-				size_t count = 0;
-				HostInfo() {};
+				shared_ptr<Gene> head=nullptr;
+				shared_ptr<Gene> tail=nullptr;
+				size_t size = 0;
+				HostInfo();
+				void insert(shared_ptr<Gene> gene);
+				void detach(shared_ptr<Gene> gene);
 			};
 
-			std::list<Gene> gens;
+			void push_front(shared_ptr<Gene> ptr);
+			void push_back(shared_ptr<Gene> ptr);
+
+			
+
+			shared_ptr<Gene> head=nullptr;
+			shared_ptr<Gene> tail=nullptr;
+			size_t size = 0;
+
+			std::map<shared_ptr<Job>, shared_ptr<Gene>> job_map;
 			std::map<Host*, HostInfo> hosts;
+			void detach(shared_ptr<Gene> gene);
 
 			std::chrono::milliseconds max_span = std::chrono::milliseconds(0);
 			std::chrono::milliseconds min_span = std::chrono::milliseconds(0);
 
-			size_t len(){ return gens.size(); };
+			size_t len(){ return size; };
 
 			void enqueJob(std::shared_ptr<Job> job);
 			void chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
@@ -102,8 +126,10 @@ namespace ClusterSimulator
 				return Chromosome();
 			};
 
-			Chromosome() {};
+			Chromosome();
 			Chromosome(const Chromosome& ref);
+			void insert(shared_ptr<Gene> gene);
+			shared_ptr<Gene> find(shared_ptr<Job> job);
 
 		};
 
@@ -114,6 +140,7 @@ namespace ClusterSimulator
 		//GeneAlgorithm() { srand(time(NULL)); }
 		GeneAlgorithm() { srand(0); }
 
+		
 		bool run_job(std::shared_ptr<Job> job);
 		void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs);
 		void deleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
