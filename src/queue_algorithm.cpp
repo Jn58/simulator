@@ -173,7 +173,7 @@ namespace ClusterSimulator {
 				Chromosome::HostInfo& host_info{ host_it.second };
 				if (host_info.size > 0)
 				{
-					shared_ptr<Job> job = host_info.head->host_next->job_;
+					shared_ptr<Job>& job = host_info.host_head->host_next->job_;
 
 					if (host->is_executable(*job))
 					{
@@ -242,7 +242,7 @@ namespace ClusterSimulator {
 	}
 	void GeneAlgorithm::Chromosome::enqueJob(std::shared_ptr<Job> job)
 	{
-		shared_ptr<Gene> gene(new Gene(job));
+		shared_ptr<Gene> gene = make_shared<Gene>(job);
 		insert(gene);
 		Host* host = gene->host_;
 		auto& host_info = hosts[host];
@@ -253,7 +253,7 @@ namespace ClusterSimulator {
 	{
 		for (auto& job : jobs)
 		{
-			shared_ptr<Gene> gene(new Gene(job));
+			shared_ptr<Gene> gene = make_shared<Gene>(job);
 			insert(gene);
 			Host* host = gene->host_;
 			auto it = hosts.insert({ host,HostInfo() }).first;
@@ -315,9 +315,17 @@ namespace ClusterSimulator {
 	}
 	void GeneAlgorithm::Chromosome::update_span()
 	{
-		max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
-		min_span = std::min_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+		if (size > 0)
+		{
+			max_span = std::max_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+			min_span = std::min_element(hosts.begin(), hosts.end(), [](auto& a, auto& b) {return a.second.make_span < b.second.make_span; })->second.make_span;
+		}
+		else
+		{
+			max_span = min_span = chrono::milliseconds(0);
+		}
 	}
+
 	GeneAlgorithm::Chromosome::Chromosome(const Chromosome& ref)
 	{
 		head = shared_ptr<GeneAlgorithm::Chromosome::Gene>(new GeneAlgorithm::Chromosome::Gene());
