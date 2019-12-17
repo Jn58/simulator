@@ -115,6 +115,26 @@ namespace ClusterSimulator {
 			}
 	}
 
+	void GeneAlgorithm::crossOver()
+	{
+		size_t seed = pseudo_random(size_t(rand()) ^ size_t(this) ^ size_t(clock()));
+		for (int i = 0; i < CROSS_OVER; ++i)
+		{
+			seed = pseudo_random(seed);
+			size_t l_index = seed % POPULATION_SIZE;
+			seed = pseudo_random(seed);
+			size_t r_index = seed % POPULATION_SIZE;
+			while (l_index == r_index)
+			{
+				seed = pseudo_random(seed);
+				r_index = seed % POPULATION_SIZE;
+			}
+			population.push_back(population[l_index]->crossOver(population[r_index]));
+		}
+
+
+	}
+
 	void GeneAlgorithm::sort()
 	{
 		std::sort(population.begin(), population.end(), [](const Chromosome* left, const Chromosome* right) {
@@ -184,7 +204,7 @@ namespace ClusterSimulator {
 	void GeneAlgorithm::step()
 	{
 		mutation();
-		//crossOver();
+		crossOver();
 		sort();
 		dropout();
 	}
@@ -488,6 +508,24 @@ namespace ClusterSimulator {
 		gene->host_next = gene->host_pre = nullptr;
 		make_span -= gene->expected_runtime;
 		--size;
+	}
+
+	GeneAlgorithm::Chromosome* GeneAlgorithm::Chromosome::crossOver(const Chromosome* other) const
+	{
+		size_t seed = pseudo_random(size_t(rand()) ^ size_t(this) ^ size_t(clock()));
+		Chromosome* p = new Chromosome;
+		Gene* g1 = head->next;
+		Gene* g2 = other->head->next;
+		while (g1 != tail)
+		{
+			seed = pseudo_random(seed);
+			Gene* g = (seed % 2) ? new Gene(*g1) : new Gene(*g2);
+			p->insert(g);
+			p->hosts[g->host_].insert(g);
+			g1 = g1->next;
+			g2 = g2->next;
+		}
+		return p;
 	}
 
 	GeneAlgorithm::Chromosome::Chromosome() : head(new Gene), tail(new Gene)
