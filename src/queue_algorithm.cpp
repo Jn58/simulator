@@ -598,6 +598,7 @@ namespace ClusterSimulator {
 			g1 = g1->next;
 			g2 = g2->next;
 		}
+		p->update_span();
 		return p;
 	}
 
