@@ -8,11 +8,13 @@
 #include <cstdlib>
 #include <ctime>
 #include <unordered_map>
+#include <mutex>
 
-#define POPULATION_SIZE 10
+
+#define POPULATION_SIZE 2
 #define MUTAION_COUNT 1
 #define MUTATION_GENE 0.1
-#define CROSS_OVER 10
+#define CROSS_OVER 0
 
 namespace ClusterSimulator
 {
@@ -76,7 +78,7 @@ namespace ClusterSimulator
 				Gene() {};
 				~Gene();
 
-				Gene& operator=(const Gene&) = delete;
+				Gene& operator=(const Gene&);
 
 				//std::chrono::milliseconds setHost(Host* host) {};
 				Host* setRandomHost();
@@ -139,8 +141,15 @@ namespace ClusterSimulator
 			~Chromosome();
 			void insert(Gene* gene);
 			Gene* find(shared_ptr<Job>& job);
+			static vector<Gene*> genePool;
+			static unique_ptr<mutex> pool_mutex;
+			static Gene* allocGene();
+			static Gene* allocGene(shared_ptr<Job>& job);
+			static Gene* allocGene(const Gene* other); 
+			static void freeGene(Gene* gene );
 
 		};
+
 
 		GeneAlgorithm();
 		~GeneAlgorithm();
