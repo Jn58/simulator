@@ -479,14 +479,13 @@ namespace ClusterSimulator {
 		Gene* cur = tail->pre;
 		while (cur != head && cur->job_->submit_time > gene->job_->submit_time) cur = cur->pre;
 		cur->insert_back(gene);
+		job_map[gene->job_] = gene;
 		++size;
 	}
 
 	GeneAlgorithm::Chromosome::Gene* GeneAlgorithm::Chromosome::find(shared_ptr<Job>& job)
 	{
-		Gene* cur = head->next;
-		while (cur->job_ != job) cur = cur->next;
-		return cur;
+		return job_map[job];
 		//return job_map[job];
 	}
 
