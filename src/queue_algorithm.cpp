@@ -426,8 +426,8 @@ namespace ClusterSimulator {
 
 	void GeneAlgorithm::Chromosome::HostInfo::insert(shared_ptr<Gene> gene)
 	{
-		auto cur = tail->host_pre;
-		while (cur != head && cur->job_->submit_time < gene->job_->submit_time) cur = cur->host_pre;
+		auto cur = host_tail->host_pre;
+		while (cur != host_head && cur->job_->submit_time < gene->job_->submit_time) cur = cur->host_pre;
 		cur->insert_host_back(gene);
 		++size;
 		make_span += gene->expected_runtime;
@@ -452,9 +452,9 @@ namespace ClusterSimulator {
 
 	GeneAlgorithm::Chromosome::HostInfo::HostInfo()
 	{
-		head = shared_ptr<GeneAlgorithm::Chromosome::Gene>(new GeneAlgorithm::Chromosome::Gene());
-		tail = shared_ptr<GeneAlgorithm::Chromosome::Gene>(new GeneAlgorithm::Chromosome::Gene());
-		head->host_next = tail;
-		tail->host_pre = head;
+		host_head = shared_ptr<GeneAlgorithm::Chromosome::Gene>(new GeneAlgorithm::Chromosome::Gene());
+		host_tail = shared_ptr<GeneAlgorithm::Chromosome::Gene>(new GeneAlgorithm::Chromosome::Gene());
+		host_head->host_next = host_tail;
+		host_tail->host_pre = host_head;
 	}
 }
