@@ -11,10 +11,10 @@
 #include <mutex>
 
 
-#define POPULATION_SIZE 2
+#define POPULATION_SIZE 5
 #define MUTAION_COUNT 1
 #define MUTATION_GENE 0.1
-#define CROSS_OVER 0
+#define CROSS_OVER 5
 
 namespace ClusterSimulator
 {
