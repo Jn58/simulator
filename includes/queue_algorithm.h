@@ -88,8 +88,8 @@ namespace ClusterSimulator
 			{
 			public:
 				std::chrono::milliseconds make_span = std::chrono::milliseconds(0);
-				shared_ptr<Gene> head=nullptr;
-				shared_ptr<Gene> tail=nullptr;
+				shared_ptr<Gene> host_head=nullptr;
+				shared_ptr<Gene> host_tail=nullptr;
 				size_t size = 0;
 				HostInfo();
 				void insert(shared_ptr<Gene> gene);
