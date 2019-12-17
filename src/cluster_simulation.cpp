@@ -169,50 +169,50 @@ namespace ClusterSimulator
 		if constexpr (!console_output)
 			//std::cout << "Remaining scenarios:  ";
 			std::cout << std::endl;
-		while (true)
+		while (!scenario_.is_empty())
 		{
-			if (!scenario_.is_empty())
+			std::vector<ScenarioEntry> next_entries;
+			ms next_arrival_time;
+			std::tie(next_entries, next_arrival_time) = scenario_.pop_all_latest();
+			if constexpr(!console_output)
 			{
-				std::vector<ScenarioEntry> next_entries;
-				ms next_arrival_time;
-				std::tie(next_entries, next_arrival_time) = scenario_.pop_all_latest();
-				if constexpr(!console_output)
-				{
-					a = 0;
-					b = 0;
+				a = 0;
+				b = 0;
 
-						
-					//std::cout << 
-					//	std::string(std::to_string(previous_counter).length(), '\b')
-					//	<< scenario_.count();
-					//previous_counter = scenario_.count();
-					a = scenario_.count();
-					b = 1 + a - 1;
+					
+				//std::cout << 
+				//	std::string(std::to_string(previous_counter).length(), '\b')
+				//	<< scenario_.count();
+				//previous_counter = scenario_.count();
+				a = scenario_.count();
+				b = 1 + a - 1;
 
-					std::cout << "\33[2K\r" << "Remaining scenarios: " << scenario_.count();
+				std::cout << "\33[2K\r" << "Remaining scenarios: " << scenario_.count();
 
-				}
-
-				auto next_event_time = events_.top().time;
-				while (next_event_time <= next_arrival_time)
-				{
-					next();
-					next_event_time = events_.top().time;
-				}
-
-				for (const auto& entry : next_entries)
-				{
-					events_.push(EventItem(entry, *this));
-				}
 			}
-			else
+
+			auto next_event_time = events_.top().time;
+			while (next_event_time <= next_arrival_time)
 			{
-				while (!events_.empty())
-					next();
-				break;	
+				next();
+				next_event_time = events_.top().time;
 			}
-			
+
+			for (const auto& entry : next_entries)
+			{
+				events_.push(EventItem(entry, *this));
+			}
 		}
+		cout << endl;
+
+		while (!events_.empty())
+		{
+			std::cout << "\33[2K\r" << "peding jobs : ";
+			cout << ((ClusterSimulator::GeneAlgorithm*)(this->all_queues_[0].current_algorithm))->length;
+			cout << "\tRemaining events: " << events_.size();
+			next();
+		}
+					
 		return true;
 	}
 
