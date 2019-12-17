@@ -9,9 +9,10 @@
 #include <ctime>
 #include <unordered_map>
 
-#define POPULATION_SIZE 2
+#define POPULATION_SIZE 10
 #define MUTAION_COUNT 1
 #define MUTATION_GENE 0.1
+#define CROSS_OVER 10
 
 namespace ClusterSimulator
 {
@@ -129,10 +130,7 @@ namespace ClusterSimulator
 			void mutate();
 			void update_span();
 
-			Chromosome crossOver(const Chromosome& other) const {
-				return Chromosome();
-			};
-
+			Chromosome* crossOver(const Chromosome* other) const;
 			Chromosome();
 			Chromosome(const Chromosome& ref);
 			Chromosome& operator=(const Chromosome&) = delete;
@@ -158,7 +156,7 @@ namespace ClusterSimulator
 		void update_pedding_job() {};
 		GeneAlgorithm::Chromosome& getBestChromosome();
 		void mutation();
-		void crossOver() {};
+		void crossOver();
 		void sort();
 		void dropout();
 		void step();
