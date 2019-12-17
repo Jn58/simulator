@@ -54,8 +54,8 @@ int main(int argc, char *argv[])
 	ClusterSimulator::Cluster cluster;
 		
 	// Parse the given scenario and the cluster from json files.
-	ClusterSimulator::Parser::parse_scenario(&scenario, scenario_path, 5000);
-	//ClusterSimulator::Parser::parse_scenario(&scenario, scenario_path, program.get<int>("--count"));
+	//ClusterSimulator::Parser::parse_scenario(&scenario, scenario_path, 5000);
+	ClusterSimulator::Parser::parse_scenario(&scenario, scenario_path, program.get<int>("--count"));
 	ClusterSimulator::Parser::parse_cluster(&cluster, host_path);
 
 	// Start simulation
