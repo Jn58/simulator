@@ -7,10 +7,11 @@
 #include <list>
 #include <cstdlib>
 #include <ctime>
+#include <unordered_map>
 
 #define POPULATION_SIZE 2
-#define MUTAION_COUNT 2
-#define MUTATION_GENE 2
+#define MUTAION_COUNT 1
+#define MUTATION_GENE 0.1
 
 namespace ClusterSimulator
 {
@@ -64,23 +65,25 @@ namespace ClusterSimulator
 				std::shared_ptr<Job> job_ = nullptr;
 				Host* host_ = nullptr;
 				std::chrono::milliseconds expected_runtime = std::chrono::milliseconds(0);
-				shared_ptr<Gene> pre=nullptr;
-				shared_ptr<Gene> next=nullptr;
-				shared_ptr<Gene> host_pre=nullptr;
-				shared_ptr<Gene> host_next=nullptr;
+				Gene* pre=nullptr;
+				Gene* next=nullptr;
+				Gene* host_pre=nullptr;
+				Gene* host_next=nullptr;
 				
 				Gene(std::shared_ptr<Job> job);
 				Gene(const Gene& ref);
 				Gene() {};
 				~Gene();
 
-				std::chrono::milliseconds setHost(Host* host) {};
+				Gene& operator=(const Gene&) = delete;
+
+				//std::chrono::milliseconds setHost(Host* host) {};
 				Host* setRandomHost();
 
-				void insert_front(shared_ptr<Gene> ptr);
-				void insert_back(shared_ptr<Gene> ptr);
-				void insert_host_front(shared_ptr<Gene> ptr);
-				void insert_host_back(shared_ptr<Gene> ptr);
+				void insert_front(Gene* ptr);
+				void insert_back(Gene* ptr);
+				void insert_host_front(Gene* ptr);
+				void insert_host_back(Gene* ptr);
 
 			};
 
@@ -88,26 +91,29 @@ namespace ClusterSimulator
 			{
 			public:
 				std::chrono::milliseconds make_span = std::chrono::milliseconds(0);
-				shared_ptr<Gene> host_head=nullptr;
-				shared_ptr<Gene> host_tail=nullptr;
+				Gene* const host_head;
+				Gene* const host_tail;
 				size_t size = 0;
+				HostInfo(const HostInfo&) = delete;
+				HostInfo& operator=(const HostInfo&) = delete;
 				HostInfo();
-				void insert(shared_ptr<Gene> gene);
-				void detach(shared_ptr<Gene> gene);
+				~HostInfo();
+				void insert(Gene* gene);
+				void detach(Gene* gene);
 			};
 
-			void push_front(shared_ptr<Gene> ptr);
-			void push_back(shared_ptr<Gene> ptr);
+			void push_front(Gene* ptr);
+			void push_back(Gene* ptr);
 
 			
 
-			shared_ptr<Gene> head=nullptr;
-			shared_ptr<Gene> tail=nullptr;
+			Gene* const head=nullptr;
+			Gene* const tail=nullptr;
 			size_t size = 0;
 
-			//std::map<shared_ptr<Job>, shared_ptr<Gene>> job_map;
-			std::map<Host*, HostInfo> hosts;
-			void detach(shared_ptr<Gene> gene);
+			//std::map<shared_ptr<Job>, Gene*> job_map;
+			unordered_map<Host*, HostInfo> hosts;
+			void detach(Gene* gene);
 
 			std::chrono::milliseconds max_span = std::chrono::milliseconds(0);
 			std::chrono::milliseconds min_span = std::chrono::milliseconds(0);
@@ -118,7 +124,7 @@ namespace ClusterSimulator
 			void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs);
 			void chromosomeDeleteJobs(std::vector<std::shared_ptr<Job>>& jobs);
 
-			Chromosome mutation() const;
+			Chromosome* mutation() const;
 
 			void mutate();
 			void update_span();
@@ -129,17 +135,21 @@ namespace ClusterSimulator
 
 			Chromosome();
 			Chromosome(const Chromosome& ref);
-			void insert(shared_ptr<Gene> gene);
-			shared_ptr<Gene> find(shared_ptr<Job> job);
+			Chromosome& operator=(const Chromosome&) = delete;
+			~Chromosome();
+			void insert(Gene* gene);
+			Gene* find(shared_ptr<Job>& job);
 
 		};
 
+		GeneAlgorithm();
+		~GeneAlgorithm();
+
 		size_t length = 0;
 
-		std::vector<Chromosome> population{POPULATION_SIZE};
+		vector<Chromosome*> population;
 
 		//GeneAlgorithm() { srand(time(NULL)); }
-		GeneAlgorithm() { srand(0); }
 
 		
 		bool run_job(std::shared_ptr<Job> job);
@@ -150,10 +160,7 @@ namespace ClusterSimulator
 		void mutation();
 		void crossOver() {};
 		void sort();
-		void dropout() {
-			population.erase(population.begin() + POPULATION_SIZE, population.end());
-		};
-
+		void dropout();
 		void step();
 
 		void exec();
