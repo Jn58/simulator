@@ -114,6 +114,8 @@ namespace ClusterSimulator
 
 			//std::map<shared_ptr<Job>, Gene*> job_map;
 			unordered_map<Host*, HostInfo> hosts;
+
+			unordered_map<shared_ptr<Job>, Gene*> job_map;
 			void detach(Gene* gene);
 
 			std::chrono::milliseconds max_span = std::chrono::milliseconds(0);
