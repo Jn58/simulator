@@ -469,7 +469,7 @@ namespace ClusterSimulator {
 			i = seed % n;
 		}
 		host_ = &all_hosts[i];
-		expected_runtime = host_->get_expected_run_time(*job_);
+		expected_runtime = host_->get_expected_run_time(*job_)* job_->slot_required / host_->max_slot;
 		return host_;
 	}
 	void GeneAlgorithm::Chromosome::Gene::insert_front(Gene* ptr)
