@@ -352,8 +352,28 @@ namespace ClusterSimulator {
 	}
 	GeneAlgorithm::Chromosome* GeneAlgorithm::Chromosome::mutation() const
 	{
-		Chromosome* c = new Chromosome(*this);
-		c->mutate();
+		Chromosome* c = new Chromosome();
+		c->size = size;
+		Gene* cur_ref = head->next;
+		Gene* cur = c->head;
+		size_t seed = pseudo_random(size_t(this) ^ size_t(clock()));
+
+		while (cur_ref != tail)
+		{
+			seed = pseudo_random(seed);
+			Gene* tmp = (0xffffffffffffffff*MUTATION_GENE < seed) ? allocGene(cur_ref) : allocGene(cur_ref->job_);
+			cur->next = tmp;
+			tmp->pre = cur;
+			c->hosts[tmp->host_].insert(tmp);
+			c->job_map[tmp->job_] = tmp;
+			cur_ref = cur_ref->next;
+			cur = tmp;
+		}
+		cur->next = c->tail;
+		c->tail->pre = cur;
+
+		c->update_span();
+
 		return c;
 	}
 	void GeneAlgorithm::Chromosome::mutate()
