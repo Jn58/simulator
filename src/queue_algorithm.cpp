@@ -116,14 +116,17 @@ namespace ClusterSimulator {
 	void GeneAlgorithm::mutation()
 	{
 		if (length > 0)
-			for (int i = 0; i < POPULATION_SIZE; ++i)
+		{
+#pragma omp parallel for schedule(dynamic,1)
+			for (int i = 0; i < POPULATION_SIZE * MUTAION_COUNT; ++i)
 			{
-				for (int ii = 0; ii < MUTAION_COUNT; ++ii)
+				Chromosome* c = population[i/MUTAION_COUNT]->mutation();
+#pragma omp critical
 				{
-					Chromosome* c = population[i]->mutation();
 					population.push_back(c);
 				}
 			}
+		}
 	}
 
 	void GeneAlgorithm::crossOver()
