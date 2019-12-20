@@ -38,7 +38,7 @@ namespace ClusterSimulator {
 				vector<shared_ptr<Job>> queued_jobs;
 #pragma omp parallel num_threads(num_threads)
 				{
-#pragma omp for
+#pragma omp for schedule(dynamic)
 					for (int i = 0; i < jobs.size()-length; ++i)
 					{
 						if (jobs[i]->state == JobState::WAIT)
