@@ -89,7 +89,7 @@ namespace ClusterSimulator {
 						}
 						length += queued_jobs.size();
 					}
-#pragma omp for
+#pragma omp for schedule(dynamic, 1)
 					for (int i = 0; i < POPULATION_SIZE; ++i)
 					{
 						population[i]->enqueJobs(queued_jobs);
