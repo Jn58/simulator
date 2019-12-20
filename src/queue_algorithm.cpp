@@ -578,10 +578,6 @@ namespace ClusterSimulator {
 
 	void GeneAlgorithm::Chromosome::freeGene(Gene* gene)
 	{
-		gene->pre = gene->next = gene->host_next = gene->host_pre = nullptr;
-		gene->host_ = nullptr;
-		gene->job_ = nullptr;
-
 		pool_mutex->lock();
 		genePool.push_back(gene);
 		pool_mutex->unlock();
