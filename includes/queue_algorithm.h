@@ -105,25 +105,36 @@ namespace ClusterSimulator
 				void detach(Gene* gene);
 			};
 
-			void push_front(Gene* ptr);
-			void push_back(Gene* ptr);
 
-			
 
 			Gene* const head=nullptr;
 			Gene* const tail=nullptr;
 			size_t size = 0;
 
-			//std::map<shared_ptr<Job>, Gene*> job_map;
 			unordered_map<Host*, HostInfo> hosts;
-
 			unordered_map<shared_ptr<Job>, Gene*> job_map;
-			void detach(Gene* gene);
 
 			std::chrono::milliseconds max_span = std::chrono::milliseconds(0);
 			std::chrono::milliseconds min_span = std::chrono::milliseconds(0);
 
-			size_t len(){ return size; };
+			Chromosome();
+			Chromosome(const Chromosome& ref);
+			Chromosome& operator=(const Chromosome&) = delete;
+			~Chromosome();
+
+
+			static vector<Gene*> genePool;
+			static unique_ptr<mutex> pool_mutex;
+			static Gene* allocGene();
+			static Gene* allocGene(shared_ptr<Job>& job);
+			static Gene* allocGene(const Gene* other); 
+			static void freeGene(Gene* gene );
+
+
+			void push_front(Gene* ptr);
+			void push_back(Gene* ptr);
+
+			void detach(Gene* gene);
 
 			void enqueJob(std::shared_ptr<Job> job);
 			void enqueJobs(std::vector<std::shared_ptr<Job>>& jobs);
@@ -135,18 +146,8 @@ namespace ClusterSimulator
 			void update_span();
 
 			Chromosome* crossOver(const Chromosome* other) const;
-			Chromosome();
-			Chromosome(const Chromosome& ref);
-			Chromosome& operator=(const Chromosome&) = delete;
-			~Chromosome();
 			void insert(Gene* gene);
 			Gene* find(shared_ptr<Job>& job);
-			static vector<Gene*> genePool;
-			static unique_ptr<mutex> pool_mutex;
-			static Gene* allocGene();
-			static Gene* allocGene(shared_ptr<Job>& job);
-			static Gene* allocGene(const Gene* other); 
-			static void freeGene(Gene* gene );
 
 		};
 
