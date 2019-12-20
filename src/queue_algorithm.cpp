@@ -101,9 +101,10 @@ namespace ClusterSimulator {
 	void GeneAlgorithm::deleteJobs(std::vector<std::shared_ptr<Job>>& executed_jobs)
 	{
 		{
-			for (auto& p : population)
+#pragma omp parallel for schedule(dynamic,1)
+			for(int i = 0; i < population.size(); ++i)
 			{
-				p->chromosomeDeleteJobs(executed_jobs);
+				population[i]->chromosomeDeleteJobs(executed_jobs);
 			}
 			length -= executed_jobs.size();
 		}
