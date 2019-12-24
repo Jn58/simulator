@@ -11,10 +11,10 @@
 #include <mutex>
 
 
-#define POPULATION_SIZE 10
+#define POPULATION_SIZE 20
 #define MUTAION_COUNT 1
 #define MUTATION_GENE 0.1
-#define CROSS_OVER 10
+#define CROSS_OVER 20
 
 namespace ClusterSimulator
 {
@@ -130,6 +130,12 @@ namespace ClusterSimulator
 			static Gene* allocGene(const Gene* other); 
 			static void freeGene(Gene* gene );
 
+			static vector<Chromosome*> chromosomePool;
+			static unique_ptr<mutex> chromosome_mutex;
+			static Chromosome* allocChromosome();
+			static Chromosome* allocChromosome(const Chromosome * ref);
+			static void freeChromosome(Chromosome* gene );
+			static void chromosomeDeallocator(GeneAlgorithm::Chromosome* c);
 
 			void push_front(Gene* ptr);
 			void push_back(Gene* ptr);

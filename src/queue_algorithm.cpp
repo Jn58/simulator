@@ -7,6 +7,7 @@
 #include <omp.h>
 #include <set>
 #include <mutex>
+#include <thread>
 
 
 
@@ -23,8 +24,10 @@ size_t pseudo_random(size_t x)
 namespace ClusterSimulator {
 	using namespace std;
 	unique_ptr<mutex> GeneAlgorithm::Chromosome::pool_mutex;
+	unique_ptr<mutex> GeneAlgorithm::Chromosome::chromosome_mutex;
 
 	vector<GeneAlgorithm::Chromosome::Gene*> GeneAlgorithm::Chromosome::genePool;
+	vector<GeneAlgorithm::Chromosome*> GeneAlgorithm::Chromosome::chromosomePool;
 
 	void GeneAlgorithm::enqueJobs(std::vector<std::shared_ptr<Job>>& jobs)
 	{
@@ -164,7 +167,7 @@ namespace ClusterSimulator {
 	{
 		while (population.size() > POPULATION_SIZE)
 		{
-			delete population.back();
+			Chromosome::freeChromosome(population.back());
 			population.pop_back();
 		}
 	}
@@ -172,16 +175,18 @@ namespace ClusterSimulator {
 	{
 		srand(time(NULL));
 		Chromosome::pool_mutex = make_unique<mutex>();
+		Chromosome::chromosome_mutex = make_unique<mutex>();
+
 		for (int i = 0; i < POPULATION_SIZE; ++i)
 		{
-			population.push_back(new Chromosome);
+			population.push_back(Chromosome::allocChromosome());
 		}
 	}
 	GeneAlgorithm::~GeneAlgorithm()
 	{
 		while (population.size() > 0)
 		{
-			delete population.back();
+			Chromosome::freeChromosome(population.back());
 			population.pop_back();
 		}
 	}
@@ -352,7 +357,7 @@ namespace ClusterSimulator {
 	}
 	GeneAlgorithm::Chromosome* GeneAlgorithm::Chromosome::mutation() const
 	{
-		Chromosome* c = new Chromosome();
+		Chromosome* c = allocChromosome();
 		c->size = size;
 		Gene* cur_ref = head->next;
 		Gene* cur = c->head;
@@ -538,6 +543,7 @@ namespace ClusterSimulator {
 	}
 
 	GeneAlgorithm::Chromosome::Gene* GeneAlgorithm::Chromosome::find(shared_ptr<Job>& job)
+
 	{
 		return job_map[job];
 		//return job_map[job];
@@ -583,6 +589,70 @@ namespace ClusterSimulator {
 		pool_mutex->unlock();
 	}
 
+	GeneAlgorithm::Chromosome* GeneAlgorithm::Chromosome::allocChromosome()
+	{
+		Chromosome* c;
+		chromosome_mutex->lock();
+		if (chromosomePool.size() > 0)
+		{
+			c = chromosomePool.back();
+			chromosomePool.pop_back();
+			c->head->next = c->tail;
+			c->tail->pre = c->head;
+			c->size = 0;
+			c->max_span = c->min_span = chrono::milliseconds(0);
+		}
+		else
+		{
+			c = new Chromosome();
+		}
+		chromosome_mutex->unlock();
+		return c;
+	}
+
+	GeneAlgorithm::Chromosome* GeneAlgorithm::Chromosome::allocChromosome(const Chromosome* ref)
+	{
+		Chromosome* c = allocChromosome();
+		c->max_span = ref->max_span;
+		c->min_span = ref->min_span;
+		c->size = ref->size;
+		Gene* cur_ref = ref->head->next;
+		Gene* cur = c->head;
+		while (cur_ref != ref->tail)
+		{
+			Gene* tmp = allocGene(cur_ref);
+			cur->next = tmp;
+			tmp->pre = cur;
+			c->hosts[tmp->host_].insert(tmp);
+			cur = tmp;
+			cur_ref = cur_ref->next;
+		}
+		cur->next = c->tail;
+		c->tail->pre = cur;
+	}
+	void GeneAlgorithm::Chromosome::chromosomeDeallocator(GeneAlgorithm::Chromosome* c)
+	{
+		Gene* cur = c->tail->pre;
+		if (cur != c->head)
+		{
+			cur = cur->pre;
+			while (cur != c->head)
+			{
+				freeGene(cur->next);
+				cur = cur->pre;
+			}
+			freeGene(cur->next);
+			c->hosts.clear();
+			c->job_map.clear();
+		}
+		chromosome_mutex->lock();
+		chromosomePool.push_back(c);
+		chromosome_mutex->unlock();
+	}
+	void GeneAlgorithm::Chromosome::freeChromosome(Chromosome* c)
+	{
+		thread(chromosomeDeallocator, c).detach();
+	}
 	void GeneAlgorithm::Chromosome::HostInfo::insert(Gene* gene)
 	{
 		Gene* cur = host_tail->host_pre;
@@ -606,7 +676,7 @@ namespace ClusterSimulator {
 	GeneAlgorithm::Chromosome* GeneAlgorithm::Chromosome::crossOver(const Chromosome* other) const
 	{
 		size_t seed = pseudo_random(size_t(rand()) ^ size_t(this) ^ size_t(clock()));
-		Chromosome* p = new Chromosome;
+		Chromosome* p = allocChromosome();
 		Gene* g1 = head->next;
 		Gene* g2 = other->head->next;
 		while (g1 != tail)
